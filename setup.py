@@ -17,9 +17,9 @@ setuptools.setup(name='pdf_renamer',
       author='Michele Cotrufo',
       author_email='michele.cotrufo@gmail.com',
       license='MIT',
-      #entry_points = {
-      #  'console_scripts': ["pdf2doi = pdf2doi.pdf2doi:main"],
-      #},
+      entry_points = {
+        'console_scripts': ["renamepdf = pdf_renamer.pdf_renamer:main"],
+      },
       packages=['pdf_renamer'],
       include_package_data=True ,
       install_requires= required_packages,
