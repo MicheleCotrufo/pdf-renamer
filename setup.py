@@ -9,7 +9,7 @@ with open("requirements.txt") as f:
     required_packages = f.read().splitlines()
 
 setuptools.setup(name='pdf-renamer',
-      version='0.1',
+      version='0.2',
       description='A python library/command-line tool to automatically rename the pdf files of scientific publications.',
       long_description=long_description,
       long_description_content_type='text/markdown',
