@@ -5,7 +5,7 @@ a valid filename to rename a pdf files, based on the chosen format and the avail
 
 import re
 import pkgutil
-import pdf_renamer.config as config
+import pdfrenamer.config as config
 import logging
 logger = logging.getLogger("pdf_renamer")
 

@@ -1,6 +1,6 @@
-# pdf_renamer
+# pdf-renamer
 
-pdf_renamer is a Python library to automatically rename the pdf files of a scientific paper, or in general any publication which can be associated to a [DOI](http://dx.doi.org) or
+pdf-renamer is a Python library to automatically rename the pdf files of a scientific paper, or in general any publication which can be associated to a [DOI](http://dx.doi.org) or
 other identifiers (e.g. [arXiv](https://arxiv.org)). It can be used to address single files or to scan entire folders and sub-folders.
 The format of the filename can be specified by the user by choosing among several tags. 
 
@@ -14,7 +14,7 @@ To DO.
 Use the package manager pip to install pdf_renamer.
 
 ```bash
-pip install pdf_renamer
+pip install pdf-renamer
 ```
 
 ## Usage

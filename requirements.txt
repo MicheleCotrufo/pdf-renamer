@@ -1,2 +1,2 @@
-pdf2doi>=0.22
+pdf2doi==0.3
 bibtexparser>=1.2.0

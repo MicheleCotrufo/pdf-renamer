@@ -7,8 +7,8 @@ import os
 import pdf2doi
 from argparse import RawTextHelpFormatter
 import pkgutil
-import pdf_renamer.config as config
-from pdf_renamer.filename_creators import build_filename, find_tags_in_format, AllowedTags 
+import pdfrenamer.config as config
+from pdfrenamer.filename_creators import build_filename, find_tags_in_format, AllowedTags 
 
 def rename(target, verbose=False, format=config.format, tags=None, max_length_authors=config.max_length_authors, max_length_filename=config.max_length_authors):
     '''
@@ -45,16 +45,16 @@ def rename(target, verbose=False, format=config.format, tags=None, max_length_au
     if verbose: loglevel = logging.INFO
     else: loglevel = logging.CRITICAL
 
-    logger = logging.getLogger("pdf_renamer")
+    logger = logging.getLogger("pdf-renamer")
     logger.setLevel(level=loglevel)
     
     #Make some sanity check on the format
     if not format:
-        logging.error(f"The specified format is not a valid string.")
+        logger.error(f"The specified format is not a valid string.")
         return None
     tags = find_tags_in_format(format)
     if not tags:
-        logging.error(f"The specified format does not contain any tag.")
+        logger.error(f"The specified format does not contain any tag.")
         return None
     for tag in tags:
         if not tag in AllowedTags:
@@ -107,7 +107,7 @@ def rename(target, verbose=False, format=config.format, tags=None, max_length_au
         
         #We use the pdf2doi library to retrieve the identifier and info of this file
         logger.info(f"Calling the pdf2doi library to retrieve identifier and info of this file.")
-        result = pdf2doi.pdf2doi(   filename ,verbose=config.pdf2doi_verbose,
+        result = pdf2doi.pdf2doi(   filename ,verbose=verbose,
                                     websearch=True, webvalidation=True,
                                     numb_results_google_search=config.numb_results_google_search)
         result['path_original'] = filename
@@ -183,7 +183,7 @@ def main():
     print("Summaries of changes done:")
     for result in results:
         if result['identifier']:
-            print(f"File \'{result['path_original']}\' has been renamed into \'{result['path_new']}\'")
+            print(f"\'{result['path_original']}\' --> \'{result['path_new']}\'")
            
     return
 

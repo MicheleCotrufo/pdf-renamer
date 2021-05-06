@@ -24,7 +24,6 @@ max_length_authors = 50
 max_length_filename = 250
 
 #Parameters for the pdf2doi library
-pdf2doi_verbose = True
 check_online_to_validate = True
 websearch = True
 numb_results_google_search = 6 #How many results should it look into when doing a google search
