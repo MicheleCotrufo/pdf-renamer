@@ -10,7 +10,7 @@ with open("requirements.txt") as f:
 
 setuptools.setup(name='pdf-renamer',
       version='0.2',
-      description='A python library/command-line tool to automatically rename the pdf files of scientific publications.',
+      description='A python library/command-line tool to automatically rename the pdf files of scientific publications by looking up the publication metadata on the web.',
       long_description=long_description,
       long_description_content_type='text/markdown',
       url='https://github.com/MicheleCotrufo/pdf-renamer',

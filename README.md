@@ -8,6 +8,10 @@ The format of the filename can be specified by the user by choosing among severa
 ## Description
 To DO.
 
+## To Do
+-check of filename lengths
+-check if file with the same filename already exists in folder
+
 
 ## Installation
 

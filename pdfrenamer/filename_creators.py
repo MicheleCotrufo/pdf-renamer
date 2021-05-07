@@ -1,6 +1,6 @@
 ''' 
 This module contains several functions and variables that are used to generate
-a valid filename to rename a pdf files, based on the chosen format and the available infos
+a valid filename, based on the chosen format and the available infos
 '''
 
 import re
@@ -82,7 +82,7 @@ def find_tags_in_format(format):
     return tags
 
 
-def build_filename(infos,format,tags):
+def build_filename(infos,format,tags,max_length_authors=config.max_length_authors, max_length_filename=config.max_length_filename):
 
     #Based on the format specified by the user, we initialize a dictionary where
     #all the keys correspond to the tags used in the specified format (i.e. contained in the format string)
@@ -163,6 +163,12 @@ def build_filename(infos,format,tags):
             for tag in ListAuthorTags:
                 rep_dict[tag] = '[NoAuthor]'
 
+        #Check that none of the author strings is longer than max_length_authors. If they are, we truncate it
+        for tag in ListAuthorTags:
+            if tag in rep_dict.keys():
+                rep_dict[tag] = rep_dict[tag][0:max_length_authors]
+
+
     if '{T}' in rep_dict.keys():
         if ('title' in infos) and infos['title']:
             rep_dict['{T}'] = infos['title']
@@ -171,4 +177,7 @@ def build_filename(infos,format,tags):
 
     for key in rep_dict.keys():
         format = format.replace(key, rep_dict[key])
-    return replace_bad_characters(format)
+    filename = replace_bad_characters(format)
+    #Check that the filename string is not longer than max_length_filename, and truncate it in case. 
+    filename = filename[0:max_length_filename]
+    return filename

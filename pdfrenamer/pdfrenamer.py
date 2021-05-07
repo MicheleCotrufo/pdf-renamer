@@ -10,7 +10,10 @@ import pkgutil
 import pdfrenamer.config as config
 from pdfrenamer.filename_creators import build_filename, find_tags_in_format, AllowedTags 
 
-def rename(target, verbose=False, format=config.format, tags=None, max_length_authors=config.max_length_authors, max_length_filename=config.max_length_authors):
+def rename(target, verbose=False, format=config.format, 
+           max_length_authors=config.max_length_authors, max_length_filename=config.max_length_filename,
+           check_subfolders = False,
+           tags=None):
     '''
     Parameters
     ----------
@@ -18,8 +21,15 @@ def rename(target, verbose=False, format=config.format, tags=None, max_length_au
         Relative or absolute path of the target .pdf file or directory
     verbose : boolean, optional
         Increases the output verbosity. The default is False.
-    format : string
-        Specifies the format of the filename
+    format : string, optional
+        Specifies the format of the filename. If not specified, the default value config.format is used instead.
+    max_length_authors : integer, optional
+        Sets the maximum length of any string related to authors. If not specified, the default value config.max_length_authors is used instead.
+    max_length_filename : integer, optional
+        Sets the maximum length of any generated filename. Any filename longer than this will be truncated. If not specified, 
+        the default value config.max_length_filename is used instead.
+    check_subfolders : boolean, optional
+        If set true, and if target is a directory, all sub-directories will be scanned for pdf files to be renamed. Default value is False.
 
     Returns
     -------
@@ -36,10 +46,6 @@ def rename(target, verbose=False, format=config.format, tags=None, max_length_au
     '''
     
     #config.numb_results_google_search = numb_results_google_search
-    
-    ##The next 2 lines are needed to make sure that logging works also in Ipython
-    #from importlib import reload 
-    #reload(logging)
 
     # Setup logging
     if verbose: loglevel = logging.INFO
@@ -62,11 +68,17 @@ def rename(target, verbose=False, format=config.format, tags=None, max_length_au
             return None
     
     #Check if target is a directory
-    #If yes, we look for all the .pdf files inside it, and for each of them
-    #we call again this function
+        #If yes, we look for all the .pdf files inside it, and for each of them
+        #we call again this function by passing the file path as target..
+        #Moreover, if check_subfolders==True, for each subfolder in the directory we call again this function
+        #by passsing the subfolder as target
+
     if  path.isdir(target):
         logger.info(f"Looking for pdf files in the folder {target}...")
         pdf_files = [f for f in listdir(target) if f.endswith('.pdf')]
+        if check_subfolders==True:
+            subfolders = [ f.path for f in os.scandir(target) if f.is_dir() ]
+
         numb_files = len(pdf_files)
         
         if numb_files == 0:
@@ -84,19 +96,30 @@ def rename(target, verbose=False, format=config.format, tags=None, max_length_au
             config.additional_abbreviations_file = target + "journal_abbreviations.txt"
 
         for f in pdf_files:
+            logger.info(f"................") 
             file = target + f
-            result = rename(file, verbose=verbose, format=format, tags=tags)
+            result = rename(file, verbose=verbose, format=format, 
+                            max_length_filename=max_length_filename, max_length_authors= max_length_authors, 
+                            tags=tags)
             #logger.info(result['identifier'])
             files_processed.append(result)
-
         logger.info("................") 
+
+        if check_subfolders==True:
+            if subfolders: logger.info("Exploring subfolders...") 
+            for subfolder in subfolders:
+                result = rename(subfolder, verbose=verbose, format=format, 
+                                max_length_filename=max_length_filename, max_length_authors= max_length_authors, 
+                                check_subfolders=True, tags=tags)
+                files_processed.append(result)
+
+        
 
         return files_processed
     
     #If target is not a directory, we check that it is an existing file and that it ends with .pdf
     else:
         filename = target
-        logger.info(f"................") 
         logger.info(f"File: {filename}")  
         if not path.exists(filename):
             logger.error(f"'{filename}' is not a valid file or directory.")
@@ -116,10 +139,10 @@ def rename(target, verbose=False, format=config.format, tags=None, max_length_au
             data = result['validation_info']
             data = bibtexparser.loads(data)
             metadata = data.entries[0]
-            metadata_string = "\t"+"\n\t\t\t\t".join([f"{key} = \"{metadata[key]}\"" for key in metadata.keys()] ) 
-            logger.info("Found the following info:")
-            logger.info(metadata_string)
-            NewName = build_filename(metadata, format, tags)
+            metadata_string = "\t\t\t\t"+"\n\t\t\t\t".join([f"{key} = \"{metadata[key]}\"" for key in metadata.keys()] ) 
+            #logger.info("Found the following info:")
+            #logger.info(metadata_string)
+            NewName = build_filename(metadata, format, tags,max_length_filename=max_length_filename, max_length_authors= max_length_authors)
             ext = os.path.splitext(filename)[-1].lower()
             directory = pathlib.Path(filename).parent
             NewPath = str(directory) + config.separator + NewName + ext
@@ -173,18 +196,26 @@ def main():
                   max_length_authors = args.max_length_authors,
                   max_length_filename = args.max_length_filename
                   )
-        
+
+    print("Summaries of changes done:")    
     if not results:
         print("No file has been renamed.")
         return
 
     if not isinstance(results,list):
         results = [results]
-    print("Summaries of changes done:")
+    
+    counter = 0
     for result in results:
-        if result['identifier']:
+        if result['identifier'] and not(result['path_original']==result['path_new']):
             print(f"\'{result['path_original']}\' --> \'{result['path_new']}\'")
-           
+            counter = counter + 1
+    if counter==0:
+        print("No file has been renamed.")
+    else:
+        string = f"{counter} file" + ("s have " if counter>1 else " has ") + "been renamed."
+        print(string)
+
     return
 
 if __name__ == '__main__':
