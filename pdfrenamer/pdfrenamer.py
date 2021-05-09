@@ -15,6 +15,7 @@ def rename(target, verbose=False, format=config.format,
            check_subfolders = False,
            tags=None):
     '''
+    This is the main routine of the script
     Parameters
     ----------
     target : string
@@ -145,19 +146,43 @@ def rename(target, verbose=False, format=config.format,
             NewName = build_filename(metadata, format, tags,max_length_filename=max_length_filename, max_length_authors= max_length_authors)
             ext = os.path.splitext(filename)[-1].lower()
             directory = pathlib.Path(filename).parent
-            NewPath = str(directory) + config.separator + NewName + ext
-            logger.info(f"The new filename is {NewPath}")
-            if (filename==NewPath):
+            NewPath = str(directory) + config.separator + NewName
+            NewPathWithExt = str(directory) + config.separator + NewName + ext
+            logger.info(f"The new filename is {NewPathWithExt}")
+            if (filename==NewPathWithExt):
                 logger.info("The new filename is identical to the old one. Nothing will be changed")
             else:
-                os.rename(filename,NewPath) 
-                logger.info(f"File renamed correctly")
-            result['path_new'] = NewPath
+                try:
+                    NewPathWithExt_renamed = rename_file(filename,NewPath,ext) 
+                    logger.info(f"File renamed correctly.")
+                    if not (NewPathWithExt == NewPathWithExt_renamed):
+                        logger.info(f"(Note: Another file with the same name was already present in the same folder, so a numerical index was added in the end).")
+                    result['path_new'] = NewPathWithExt_renamed
+                except Exception as e: 
+                    logger.error('Some error occured while trying to rename this file: \n '+ str(e))
+                    result['path_new'] = None
         else:
             logger.info("The pdf2doi library was not able to find an identifier for this pdf file.")
             result['path_new'] = None
         
         return result 
+
+def rename_file(old_path,new_path,ext):
+    #It renames the file in old_path with the new name contained in new_path. 
+    #If another file with the same name specified by new_path already exists in the same folder, it adds an 
+    #incremental number
+    if not os.path.exists(old_path):
+        raise ValueError(f"The file {old_path} does not exist")
+    i=1
+
+    while True:
+        New_path = new_path + (f" ({i})" if i>1 else "") + ext
+        if os.path.exists(New_path):
+            i = i+1
+            continue
+        else:
+            os.rename(old_path,New_path)
+            return New_path
 
 def main():
     parser = argparse.ArgumentParser( 
