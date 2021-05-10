@@ -10,6 +10,19 @@ import pkgutil
 import pdfrenamer.config as config
 from pdfrenamer.filename_creators import build_filename, find_tags_in_format, AllowedTags 
 
+#Change the formatter for the logger of the pdf2doi library, in order to add a prefix in front of all
+#output created by pdf2doi
+logger = logging.getLogger("pdf2doi")
+logger.setLevel(level=logging.INFO)
+logger.handlers =[]
+if not logger.handlers:
+    formatter = logging.Formatter("\t[pdf2doi]: %(message)s")
+    ch = logging.StreamHandler()
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+logger.propagate = False
+#####
+
 def rename(target, verbose=False, format=config.format, 
            max_length_authors=config.max_length_authors, max_length_filename=config.max_length_filename,
            check_subfolders = False,
@@ -66,55 +79,62 @@ def rename(target, verbose=False, format=config.format,
     for tag in tags:
         if not tag in AllowedTags:
             logger.error(f"The specified format contains \"{tag}\", which is not a valid tag.")
+            logger.error(f"The valid tags are: " + ",".join(AllowedTags))
             return None
     
     #Check if target is a directory
-        #If yes, we look for all the .pdf files inside it, and for each of them
-        #we call again this function by passing the file path as target..
-        #Moreover, if check_subfolders==True, for each subfolder in the directory we call again this function
-        #by passsing the subfolder as target
+        # If yes, we look for all the .pdf files inside it, and for each of them
+        # we call again this function by passing the file path as target.
+        #
+        # Moreover, if check_subfolders==True, for each subfolder in the directory we call again this function
+        # by passsing the subfolder as target
 
     if  path.isdir(target):
-        logger.info(f"Looking for pdf files in the folder {target}...")
-        pdf_files = [f for f in listdir(target) if f.endswith('.pdf')]
-        if check_subfolders==True:
-            subfolders = [ f.path for f in os.scandir(target) if f.is_dir() ]
+        logger.info(f"Looking for pdf files and subfolders in the folder {target}...")
 
-        numb_files = len(pdf_files)
-        
-        if numb_files == 0:
-            logger.error("No pdf files found in this folder.")
-            return None
-        
-        logger.info(f"Found {numb_files} pdf files.")
-        if not(target.endswith(config.separator)): #Make sure the path ends with "\" or "/" (according to the OS)
-            target = target + config.separator
-            
-        files_processed= [] #For each pdf file in the target folder we will store a dictionary inside this list
-
+        #Check if a file "journal_abbreviations.txt" exists in the folder. If yes, we use it as additional source of abbreviations
         if path.exists(target + "journal_abbreviations.txt"):
             logger.info(f"Found a file journal_abbreviations.txt with possible additional Journal abbreviations.")
             config.additional_abbreviations_file = target + "journal_abbreviations.txt"
 
-        for f in pdf_files:
-            logger.info(f"................") 
-            file = target + f
-            result = rename(file, verbose=verbose, format=format, 
-                            max_length_filename=max_length_filename, max_length_authors= max_length_authors, 
-                            tags=tags)
-            #logger.info(result['identifier'])
-            files_processed.append(result)
-        logger.info("................") 
+        #We build a list of all the pdf files in this folder, and of all subfolders
+        pdf_files = [f for f in listdir(target) if f.endswith('.pdf')]
+        subfolders = [ f.path for f in os.scandir(target) if f.is_dir() ]
 
-        if check_subfolders==True:
-            if subfolders: logger.info("Exploring subfolders...") 
-            for subfolder in subfolders:
-                result = rename(subfolder, verbose=verbose, format=format, 
+        numb_files = len(pdf_files)
+        if numb_files == 0:
+            logger.error("No pdf file found in this folder.")
+        else:
+            logger.info(f"Found {numb_files} pdf file(s).")
+            if not(target.endswith(config.separator)): #Make sure the path ends with "\" or "/" (according to the OS)
+                target = target + config.separator
+            
+            files_processed = [] #For each pdf file in the target folder we will store a dictionary inside this list
+            for f in pdf_files:
+                logger.info(f"................") 
+                file = target + f
+                #We call again this same function but this time targeting the single file
+                result = rename(file, verbose=verbose, format=format, 
                                 max_length_filename=max_length_filename, max_length_authors= max_length_authors, 
-                                check_subfolders=True, tags=tags)
+                                tags=tags)
                 files_processed.append(result)
+            logger.info("................") 
 
-        
+        #If there are subfolders, and if check_subfolders==True, we call gain this function for each subfolder
+        numb_subfolders = len(subfolders)
+        if numb_subfolders:
+            logger.info(f"Found {numb_subfolders} subfolder(s)")
+            if check_subfolders==True :
+                logger.info("Exploring subfolders...") 
+                for subfolder in subfolders:
+                    result = rename(subfolder, verbose=verbose, format=format, 
+                                    max_length_filename=max_length_filename, max_length_authors= max_length_authors, 
+                                    check_subfolders=True, tags=tags)
+                    files_processed.append(result)
+            else:
+                logger.info("The subfolder(s) will not be scanned because the parameter check_subfolders is set to False."+
+                            " When using this script from command line, use the option -sf to explore also subfolders.") 
+
 
         return files_processed
     
@@ -140,10 +160,10 @@ def rename(target, verbose=False, format=config.format,
             data = result['validation_info']
             data = bibtexparser.loads(data)
             metadata = data.entries[0]
-            metadata_string = "\t\t\t\t"+"\n\t\t\t\t".join([f"{key} = \"{metadata[key]}\"" for key in metadata.keys()] ) 
+            #metadata_string = "\t\t\t\t"+"\n\t\t\t\t".join([f"{key} = \"{metadata[key]}\"" for key in metadata.keys()] ) 
             #logger.info("Found the following info:")
             #logger.info(metadata_string)
-            NewName = build_filename(metadata, format, tags,max_length_filename=max_length_filename, max_length_authors= max_length_authors)
+            NewName = build_filename(metadata, format, tags, max_length_filename=max_length_filename, max_length_authors= max_length_authors)
             ext = os.path.splitext(filename)[-1].lower()
             directory = pathlib.Path(filename).parent
             NewPath = str(directory) + config.separator + NewName
@@ -170,7 +190,8 @@ def rename(target, verbose=False, format=config.format,
 def rename_file(old_path,new_path,ext):
     #It renames the file in old_path with the new name contained in new_path. 
     #If another file with the same name specified by new_path already exists in the same folder, it adds an 
-    #incremental number
+    #incremental number (e.g. "filename.pdf" becomes "filename (2).pdf"
+
     if not os.path.exists(old_path):
         raise ValueError(f"The file {old_path} does not exist")
     i=1
@@ -203,6 +224,11 @@ def main():
                         "Valid tags:\n"+
                         "\n".join([key+val for key,val in AllowedTags.items()]),
                         action="store", dest="format", type=str, default = "{YYYY} - {Jabbr} - {A3etal} - {T}")
+    parser.add_argument(
+                        "-sf",
+                        "--sub_folders",
+                        help="Rename also pdf files contained in subfolders of target folder.",
+                        action="store_true")
     parser.add_argument('-max_length_authors', 
                         help=f"Sets the maximum length of any string related to authors (default={str(config.max_length_authors)}).",
                         action="store", dest="max_length_authors", type=int)
@@ -219,7 +245,8 @@ def main():
                   verbose=not(args.no_verbose),
                   format=args.format,
                   max_length_authors = args.max_length_authors,
-                  max_length_filename = args.max_length_filename
+                  max_length_filename = args.max_length_filename,
+                  check_subfolders = not(sub_folders)
                   )
 
     print("Summaries of changes done:")    
