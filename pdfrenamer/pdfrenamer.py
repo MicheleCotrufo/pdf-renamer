@@ -91,7 +91,8 @@ def rename(target, verbose=False, format=config.format,
 
     if  path.isdir(target):
         logger.info(f"Looking for pdf files and subfolders in the folder {target}...")
-
+        if not(target.endswith(config.separator)): #Make sure the path ends with "\" or "/" (according to the OS)
+                target = target + config.separator
         #Check if a file "journal_abbreviations.txt" exists in the folder. If yes, we use it as additional source of abbreviations
         if path.exists(target + "journal_abbreviations.txt"):
             logger.info(f"Found a file journal_abbreviations.txt with possible additional Journal abbreviations.")
@@ -106,8 +107,7 @@ def rename(target, verbose=False, format=config.format,
             logger.error("No pdf file found in this folder.")
         else:
             logger.info(f"Found {numb_files} pdf file(s).")
-            if not(target.endswith(config.separator)): #Make sure the path ends with "\" or "/" (according to the OS)
-                target = target + config.separator
+
             
             files_processed = [] #For each pdf file in the target folder we will store a dictionary inside this list
             for f in pdf_files:
@@ -130,7 +130,7 @@ def rename(target, verbose=False, format=config.format,
                     result = rename(subfolder, verbose=verbose, format=format, 
                                     max_length_filename=max_length_filename, max_length_authors= max_length_authors, 
                                     check_subfolders=True, tags=tags)
-                    files_processed.append(result)
+                    files_processed.extend(result)
             else:
                 logger.info("The subfolder(s) will not be scanned because the parameter check_subfolders is set to False."+
                             " When using this script from command line, use the option -sf to explore also subfolders.") 
@@ -171,6 +171,7 @@ def rename(target, verbose=False, format=config.format,
             logger.info(f"The new filename is {NewPathWithExt}")
             if (filename==NewPathWithExt):
                 logger.info("The new filename is identical to the old one. Nothing will be changed")
+                result['path_new'] = NewPathWithExt
             else:
                 try:
                     NewPathWithExt_renamed = rename_file(filename,NewPath,ext) 
@@ -246,7 +247,7 @@ def main():
                   format=args.format,
                   max_length_authors = args.max_length_authors,
                   max_length_filename = args.max_length_filename,
-                  check_subfolders = not(sub_folders)
+                  check_subfolders = args.sub_folders
                   )
 
     print("Summaries of changes done:")    
