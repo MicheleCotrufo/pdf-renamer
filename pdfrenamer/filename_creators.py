@@ -51,7 +51,8 @@ def replace_bad_characters(string):
               '{\\textendash}'  :   '-',       
               "?"               :   ".",  
               "{\\textemdash}"  :   "-",
-              "\n"              :   " "}
+              "\n"              :   " ",
+              "{\\textquotesingle}" : "\'"}
     for i, j in replace.items():
         string = string.replace(i, j)
 
