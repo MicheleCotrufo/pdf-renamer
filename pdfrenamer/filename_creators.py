@@ -62,16 +62,33 @@ def replace_bad_characters(string):
 
     return string
 
-def find_abbreviation_journal(journal_name):
+def find_abbreviation_journal(journal_name, additional_journal_abbreviations_file = None):
+    """
+    Find a journal abbreviation for a given journal name. It looks for abbreviations in a standard file (journalList.txt) and also
+    in the path specified by additional_journal_abbreviations_file
+
+    Parameters
+    ----------
+    journal_name : string
+        Name of the Journal.
+    additional_journal_abbreviations_file : string, optional
+        Valid path to a text file containing additional Journal abbreviations. The abbreviations specified in this file
+        will have priority over the ones specified in journalList.txt. The default is None.
+
+    Returns
+    -------
+    string
+        The abbreviation of the journal if any is found, or None if no abbraviation is found
+
+    """
     to_search = replace_bad_characters( (journal_name.strip() + " = ").lower() )
-    if config.additional_abbreviations_file:
-        with open(config.additional_abbreviations_file, 'r') as file:
+    if additional_journal_abbreviations_file:
+        with open(additional_journal_abbreviations_file, 'r') as file:
             for line in file:
                 if (line.lower()).startswith(to_search):
                     return line[len(to_search):].rstrip()
 
     data = pkgutil.get_data(__name__, "journalList.txt").decode('utf8')
-    #with open('journalList.txt', 'r') as file:
     for line in data.splitlines():
         if (line.lower()).startswith(to_search):
             return line[len(to_search):].rstrip()
@@ -83,7 +100,9 @@ def find_tags_in_format(format):
     return tags
 
 
-def build_filename(infos,format,tags,max_length_authors=config.max_length_authors, max_length_filename=config.max_length_filename):
+def build_filename(infos,format,tags,
+                   max_length_authors=config.max_length_authors, max_length_filename=config.max_length_filename,
+                   additional_journal_abbreviations_file = None):
 
     #Based on the format specified by the user, we initialize a dictionary where
     #all the keys correspond to the tags used in the specified format (i.e. contained in the format string)
@@ -118,7 +137,7 @@ def build_filename(infos,format,tags,max_length_authors=config.max_length_author
     if ('{J}' in rep_dict.keys()) or ('{Jabbr}' in rep_dict.keys()):
         if ('journal' in infos) and infos['journal']:
             rep_dict['{J}'] = validate_journal(infos['journal'])
-            Jabbr = find_abbreviation_journal(infos['journal'])
+            Jabbr = find_abbreviation_journal(infos['journal'],additional_journal_abbreviations_file=additional_journal_abbreviations_file)
             if Jabbr:
                 rep_dict['{Jabbr}'] = Jabbr
             else:
@@ -130,11 +149,16 @@ def build_filename(infos,format,tags,max_length_authors=config.max_length_author
             rep_dict['{J}'] = '[NoJournal]'
             rep_dict['{Jabbr}'] = '[NoJourn]'
 
+    author_info = ''
+    if 'author' in infos.keys():
+        author_info = infos['author']
+    if 'authors' in infos.keys() and len(infos['authors'])>len(author_info):
+        author_info = infos['authors']
 
     ListAuthorTags = ['{Aall}','{A3etal}','{Aetal}','{aAall}','{aA3etal}','{aAetal}']
     if any(item in rep_dict.keys() for item in ListAuthorTags):
-        if ('author' in infos) and infos['author']:
-            authors = [author.strip() for author in infos['author'].split(" and ")]
+        if author_info:
+            authors = [author.strip() for author in author_info.split(" and ")]
             lastnames = [name.split()[-1] for name in authors]
             firstnames = [name.split()[:-1] if len(name.split())>1 else [''] for name in authors]   #   The check on len(name.split())>1 is necessary to address the case in which
             if lastnames:                                                                                        #   the string name contains only one words (e.g. only the last name of the author is available)
@@ -143,24 +167,26 @@ def build_filename(infos,format,tags,max_length_authors=config.max_length_author
                 if len(lastnames)>3:
                     rep_dict['{A3etal}'] = rep_dict['{A3etal}'] + " et al."
                 rep_dict['{Aetal}'] = lastnames[0] + (" et al." if len(lastnames)>1 else "")
+
+                if firstnames: 
+                    firstinitials = [firstname[0][0].upper()+"."  if len(firstname[0])>0 else "" for firstname in firstnames]
+                    firstinitial_lastnames = [firstinitials + " " + lastname for (firstinitials,lastname) in zip(firstinitials,lastnames) ]
+  
+                    rep_dict['{aAall}'] = ", ".join(firstinitial_lastnames)
+                    rep_dict['{aA3etal}'] = ", ".join(firstinitial_lastnames[0:3])
+                    if len(firstinitial_lastnames)>3:
+                        rep_dict['{aA3etal}'] = rep_dict['{aA3etal}'] + " et al."
+                    rep_dict['{aAetal}'] = firstinitial_lastnames[0] + (" et al." if len(firstinitial_lastnames)>1 else "")
+                else:
+                    rep_dict['{aAall}'] = rep_dict['{Aall}']
+                    rep_dict['{aA3etal}'] = rep_dict['{A3etal}']
+                    rep_dict['{aAetal}'] = rep_dict['{Aetal}']
             else:
                 for tag in ListAuthorTags:
                     rep_dict[tag] = '[NoAuthor]'
 
-            if firstnames: 
-                firstinitials = [firstname[0][0].upper()+"."  if len(firstname[0])>0 else "" for firstname in firstnames]
-                firstinitial_lastnames = [firstinitials + " " + lastname for (firstinitials,lastname) in zip(firstinitials,lastnames) ]
-  
-                rep_dict['{aAall}'] = ", ".join(firstinitial_lastnames)
-                rep_dict['{aA3etal}'] = ", ".join(firstinitial_lastnames[0:3])
-                if len(firstinitial_lastnames)>3:
-                    rep_dict['{aA3etal}'] = rep_dict['{aA3etal}'] + " et al."
-                rep_dict['{aAetal}'] = firstinitial_lastnames[0] + (" et al." if len(firstinitial_lastnames)>1 else "")
-            else:
-                rep_dict['{aAall}'] = rep_dict['{Aall}']
-                rep_dict['{aA3etal}'] = rep_dict['{A3etal}']
-                rep_dict['{aAetal}'] = rep_dict['{Aetal}']
-        else:
+        else: #if author_info evalues to False, it means that it is an empty string, and thus the 'author' or 'authors' tags were not present
+              # in the bibtex entry
             for tag in ListAuthorTags:
                 rep_dict[tag] = '[NoAuthor]'
 
