@@ -10,7 +10,7 @@ import pkgutil
 import pdfrenamer.config as config
 from pdfrenamer.filename_creators import build_filename, find_tags_in_format, AllowedTags 
 
-#Change the formatter for the logger of the pdf2doi library, in order to add a prefix in front of all
+#Change the formatter for the logger of the pdf2doi library; add a prefix '\t' in front of all
 #output created by pdf2doi
 logger = logging.getLogger("pdf2doi")
 logger.setLevel(level=logging.INFO)
@@ -24,11 +24,19 @@ logger.propagate = False
 #####
 
 def rename(target, verbose=False, format=config.format, 
-           max_length_authors=config.max_length_authors, max_length_filename=config.max_length_filename,
+           max_length_authors=config.max_length_authors, 
+           max_length_filename=config.max_length_filename,
            check_subfolders = False,
+           additional_journal_abbreviations_file = None,
            tags=None):
     '''
-    This is the main routine of the script
+    This is the main routine of the script. When the library is used as a command-line tool (via the entry-point "pdfrenamer") the input arguments
+    are collected, validated and sent to this function (see the function main () below). 
+    The function tries to rename the pdf file whose path is specified in the input argument target with the format specified in the input 
+    argument format. The info of the paper (title, authors, etc.) are obtained via the library pdf2doi. 
+    If the input argument target is the path of a folder, the function is applied to each pdf file contained in the folder
+    (by calling again the same function). If check_subfolders is set to True, it also renames pdf files in all subfolders (recursively).
+
     Parameters
     ----------
     target : string
@@ -44,6 +52,10 @@ def rename(target, verbose=False, format=config.format,
         the default value config.max_length_filename is used instead.
     check_subfolders : boolean, optional
         If set true, and if target is a directory, all sub-directories will be scanned for pdf files to be renamed. Default value is False.
+    additional_journal_abbreviations_file : string, optional
+        Path to a txt file containing additional journal abbreviations. If the folder being explored contains "journal_abbreviations.txt", this file
+        takes priority over the file specified by the path contained in the input argument additional_journal_abbreviations_file
+
 
     Returns
     -------
@@ -51,7 +63,7 @@ def rename(target, verbose=False, format=config.format,
         The output is a single dictionary if target is a file, or a list of dictionaries if target is a directory, 
         each element of the list describing one file. Each dictionary has the following keys
         result['path_original'] = path of the pdf file (with the original filename)
-        result['path_new'] = path of the pdf file (with the new filename)
+        result['path_new'] = path of the pdf file, with the new filename, or None if it was not possible to generate a new filename
         result['identifier'] = DOI or other identifier (or None if nothing is found)
         result['identifier_type'] = string specifying the type of identifier (e.g. 'doi' or 'arxiv')
         result['validation_info'] = Additional info on the paper possibly returned by the pdf2doi library
@@ -93,10 +105,13 @@ def rename(target, verbose=False, format=config.format,
         logger.info(f"Looking for pdf files and subfolders in the folder {target}...")
         if not(target.endswith(config.separator)): #Make sure the path ends with "\" or "/" (according to the OS)
                 target = target + config.separator
+
         #Check if a file "journal_abbreviations.txt" exists in the folder. If yes, we use it as additional source of abbreviations
-        if path.exists(target + "journal_abbreviations.txt"):
+        #If not, additional_journal_abbreviations_file will remain set to the value specified by the input argument to this function (or None
+        #if nothing was specified)
+        if path.exists(target + "journal_abbreviations.txt") : 
             logger.info(f"Found a file journal_abbreviations.txt with possible additional Journal abbreviations.")
-            config.additional_abbreviations_file = target + "journal_abbreviations.txt"
+            additional_journal_abbreviations_file = target + "journal_abbreviations.txt"
 
         #We build a list of all the pdf files in this folder, and of all subfolders
         pdf_files = [f for f in listdir(target) if f.endswith('.pdf')]
@@ -116,6 +131,7 @@ def rename(target, verbose=False, format=config.format,
                 #We call again this same function but this time targeting the single file
                 result = rename(file, verbose=verbose, format=format, 
                                 max_length_filename=max_length_filename, max_length_authors= max_length_authors, 
+                                additional_journal_abbreviations_file = additional_journal_abbreviations_file,
                                 tags=tags)
                 files_processed.append(result)
             logger.info("................") 
@@ -129,7 +145,8 @@ def rename(target, verbose=False, format=config.format,
                 for subfolder in subfolders:
                     result = rename(subfolder, verbose=verbose, format=format, 
                                     max_length_filename=max_length_filename, max_length_authors= max_length_authors, 
-                                    check_subfolders=True, tags=tags)
+                                    check_subfolders=True, additional_journal_abbreviations_file=additional_journal_abbreviations_file,
+                                    tags=tags)
                     files_processed.extend(result)
             else:
                 logger.info("The subfolder(s) will not be scanned because the parameter check_subfolders is set to False."+
@@ -155,15 +172,19 @@ def rename(target, verbose=False, format=config.format,
                                     websearch=True, webvalidation=True,
                                     numb_results_google_search=config.numb_results_google_search)
         result['path_original'] = filename
+
+        #if pdf2doi was able to find an identifer, and thus to retrieve the bibtex data, we use them to rename the file
         if result and result['identifier']:
             logger.info(f"Found an identifier for this file: {result['identifier']} ({result['identifier_type']}).")
             data = result['validation_info']
             data = bibtexparser.loads(data)
             metadata = data.entries[0]
-            #metadata_string = "\t\t\t\t"+"\n\t\t\t\t".join([f"{key} = \"{metadata[key]}\"" for key in metadata.keys()] ) 
-            #logger.info("Found the following info:")
-            #logger.info(metadata_string)
-            NewName = build_filename(metadata, format, tags, max_length_filename=max_length_filename, max_length_authors= max_length_authors)
+            metadata_string = "\t\t\t\t"+"\n\t\t\t\t".join([f"{key} = \"{metadata[key]}\"" for key in metadata.keys()] ) 
+            logger.info("Found the following info:")
+            logger.info(metadata_string)
+
+            #Generate the new name by calling the function build_filename
+            NewName = build_filename(metadata, format, tags, max_length_filename=max_length_filename, max_length_authors= max_length_authors, additional_journal_abbreviations_file=additional_journal_abbreviations_file)
             ext = os.path.splitext(filename)[-1].lower()
             directory = pathlib.Path(filename).parent
             NewPath = str(directory) + config.separator + NewName
@@ -191,7 +212,7 @@ def rename(target, verbose=False, format=config.format,
 def rename_file(old_path,new_path,ext):
     #It renames the file in old_path with the new name contained in new_path. 
     #If another file with the same name specified by new_path already exists in the same folder, it adds an 
-    #incremental number (e.g. "filename.pdf" becomes "filename (2).pdf"
+    #incremental number (e.g. "filename.pdf" becomes "filename (2).pdf")
 
     if not os.path.exists(old_path):
         raise ValueError(f"The file {old_path} does not exist")
@@ -249,26 +270,37 @@ def main():
                   max_length_filename = args.max_length_filename,
                   check_subfolders = args.sub_folders
                   )
+    if not results:
+        #print("No file has been renamed.")
+        return
 
     print("Summaries of changes done:")    
-    if not results:
-        print("No file has been renamed.")
-        return
 
     if not isinstance(results,list):
         results = [results]
     
     counter = 0
+    counter_identifier_notfound = 0
     for result in results:
-        if result['identifier'] and not(result['path_original']==result['path_new']):
-            print(f"\'{result['path_original']}\' --> \'{result['path_new']}\'")
-            counter = counter + 1
+        if result['identifier']:
+            if not(result['path_original']==result['path_new']):
+                print(f"\'{result['path_original']}\' --> \'{result['path_new']}\'")
+                counter = counter + 1
+        else : 
+            counter_identifier_notfound = counter_identifier_notfound + 1
     if counter==0:
         print("No file has been renamed.")
     else:
         string = f"{counter} file" + ("s have " if counter>1 else " has ") + "been renamed."
         print(string)
 
+    if counter_identifier_notfound > 0:
+        print("The following pdf files could not be renamed because it was not possile to automatically find " +
+              "the publication identifier (DOI or arXiv ID). Try to manually add a valid identifier to each file via " +
+              "the command \"pdf2doi 'filename.pdf' -id 'valid_identifier'\" and then run again pdf-renamer.")  
+        for result in results:
+            if not(result['identifier']):
+                print(f"{result['path_original']}")
     return
 
 if __name__ == '__main__':
