@@ -1,34 +1,43 @@
 # pdf-renamer
-
 pdf-renamer is a Python library to automatically rename the pdf files of a scientific paper, or in general any publication which can be associated to a [DOI](http://dx.doi.org) or
 other identifiers (e.g. [arXiv](https://arxiv.org)). It can be used to address single files or to scan entire folders and sub-folders.
 The format of the filename can be specified by the user by choosing among several tags. 
 
+## Table of Contents
+ - [Description](#description)
+ - [Installation](#installation)
+ - [Usage](#usage)
+ - [Installing the shortcuts in the right-click context menu of Windows](#installing-the-shortcuts-in-the-right-click-context-menu-of-windows)
+  - [Contributing](#contributing)
+ - [License](#license)
 
 ## Description
 To DO.
 
-## To Do
--check if file with the same filename already exists in folder
-
-
 ## Installation
 
-Use the package manager pip to install pdf_renamer.
+[![Pip Package](https://img.shields.io/pypi/v/pdf-renamer?logo=PyPI)](https://pypi.org/project/pdf-renamer)
+
+Use the package manager pip to install pdf-renamer.
 
 ```bash
-pip install pdf-renamer
+pip install pdfrenamer==0.7rc1
 ```
+The executable will be installed in certain directory whose path depends on the type of Python installation and the operating system. Make sure that this directory is in the ```PATH``` variable of your operating system (for standard python installations under Windows this should be already the case). Check how to do add the folder to the ```PATH``` variable for [Windows](https://www.google.com/search?q=python+add+script+folder+to+path+windows), [Mac](https://www.google.com/search?q=python+add+script+folder+to+path+mac) and [Linux](https://www.google.com/search?q=python+add+script+folder+to+path+linux).
+
+Under Windows, it is also possible to add [shortcuts to the right-click context menu](#installing-the-shortcuts-in-the-right-click-context-menu-of-windows).
 
 ## Usage
 
-pdf_renamer can be used either as a stand-alone application invoked from the command line, or by importing it in your python project.
+```pdf-renamer``` can be invoked directly from the command line, without having to open a python console.
+The simplest command-line invokation is
 
-### Usage inside a python script:
-TO DO
+```
+$ pdfrenamer 'path/to/target'
+```
+where ```target``` is either a valid pdf file or a directory containing pdf files.
 
-### Command line usage:
-TO DO
+
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
