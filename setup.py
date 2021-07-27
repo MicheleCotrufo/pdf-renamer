@@ -18,7 +18,7 @@ setuptools.setup(name='pdf-renamer',
       author_email='michele.cotrufo@gmail.com',
       license='MIT',
       entry_points = {
-        'console_scripts': ["pdfrenamer = pdfrenamer.pdfrenamer:main"],
+        'console_scripts': ["pdfrenamer = pdfrenamer.main:main"],
       },
       packages=['pdfrenamer'],
       include_package_data = True,
