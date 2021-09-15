@@ -21,7 +21,7 @@ To DO.
 Use the package manager pip to install pdf-renamer.
 
 ```bash
-pip install pdfrenamer==0.7rc1
+pip install pdf-renamer==0.7rc1
 ```
 The executable will be installed in certain directory whose path depends on the type of Python installation and the operating system. Make sure that this directory is in the ```PATH``` variable of your operating system (for standard python installations under Windows this should be already the case). Check how to do add the folder to the ```PATH``` variable for [Windows](https://www.google.com/search?q=python+add+script+folder+to+path+windows), [Mac](https://www.google.com/search?q=python+add+script+folder+to+path+mac) and [Linux](https://www.google.com/search?q=python+add+script+folder+to+path+linux).
 
