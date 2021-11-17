@@ -4,6 +4,7 @@
 /build/
 /test*/
 /_examples*
+/examples*
 # Compiled python modules.
 *.pyc
 /docs
