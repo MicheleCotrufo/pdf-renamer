@@ -5,8 +5,8 @@ a valid filename, based on the chosen format and the available infos
 
 import re
 import pkgutil
-import pdf2doi
-from pdfrenamer.config import Config
+import pdf2bib
+import pdfrenamer.config as config
 import logging
 import unidecode
 logger = logging.getLogger("pdf_renamer")
@@ -44,6 +44,8 @@ def validate_journal(journal):
     return journal
 
 def is_valid_integer(string,number_digits):
+    if not isinstance(string,str):
+        string = str(string)
     return (string.isnumeric() and len(string)==number_digits)
 
 def sanitize(string):
@@ -54,7 +56,8 @@ def sanitize(string):
     replace ={       
                 '-'  : ['{\\textendash}','{\\textemdash}'] ,
                 '_'  : ['{\\textunderscore}'],
-                ' '  : ["\n","{\\textasteriskcentered}","{\\textgreater}","{\\textless}"],
+                ' '  : ["{\\textasteriskcentered}","{\\textgreater}","{\\textless}"],
+                ''  : ["\n"],
                 '{'  : ["{\\textbraceleft}"],
                 '}'  : ["{\\textbraceright}"],
                 "\'" : ["{\\textquotesingle}","{\\textquotedblleft}","{\\textquotedblright}","{\\textquoteleft}","{\\textquoteright}"]
@@ -65,8 +68,8 @@ def sanitize(string):
     string = re.sub(r"{\\hspace{.*}}", "",string)
 
     #Step 2. Find all substrings in the format {\string1{string2}} and replace them by string2
-    #We use the function remove_latex_codes defined in the pdf2doi package
-    string = pdf2doi.remove_latex_codes(string)
+    #We use the function remove_latex_codes defined in the pdf2bib package
+    string = pdf2bib.remove_latex_codes(string)
 
     #Step 3. Remove any residual special character
     invalid = "<>\"/\|*{}'?:"
@@ -74,6 +77,9 @@ def sanitize(string):
         string = string.replace(char, '')
     #Step 4. #Make a final check that the string is only made out of ascii characters (i.e. no accents, tildes, etc.)
     string = unidecode.unidecode(string) 
+
+    #Step 5. If there are multiple spaces, replace them with only one
+    string = re.sub(' +',' ',string)
 
     return string
 
@@ -130,16 +136,17 @@ def check_format_is_valid(format):
     return tags
 
 
-def build_filename(infos,   format, tags,
-                    max_length_authors   =   Config.params['max_length_authors'], 
-                    max_length_filename  =   Config.params['max_length_filename']):
+def build_filename(infos,   format = None, tags=None):
     '''
     It generates a filename based on the metadata contained in the input dictionary 'infos', using the format specified 
     in the input string 'format'. The tags contained in format have been already identified, and passed to this function 
     in the input dictionary 'tags'. 
     '''
-
+    if not format: format = config.get('format')
     rep_dict =  dict.fromkeys(tags) #Initialize a dictionary with keys equal to the elements of the list tags, and all the values set to None
+
+    for key in infos.keys():
+        infos[key] = str(infos[key])
 
     #Now we look in the keys of the 'rep_dict' dictionary and populate the values of the dictionary
     #by using the information contained in the 'infos' dictionary
@@ -189,6 +196,7 @@ def build_filename(infos,   format, tags,
     ListAuthorTags = ['{Aall}','{A3etal}','{Aetal}','{aAall}','{aA3etal}','{aAetal}']
     if any(item in rep_dict.keys() for item in ListAuthorTags):
         if author_info:
+            #IMPORTANT: Here it is assumed that the string containing the authors names is in the format "firstname1, secondname1 ...  lastname1 and firstname2, secondname2 ...  lastname2 etc."
             authors = [author.strip() for author in author_info.split(" and ")]
             lastnames = [name.split()[-1] for name in authors]
             firstnames = [name.split()[:-1] if len(name.split())>1 else [''] for name in authors]   #   The check on len(name.split())>1 is necessary to address the case in which
@@ -224,9 +232,9 @@ def build_filename(infos,   format, tags,
         #Check that none of the author strings is longer than max_length_authors. If they are, we truncate it
         for tag in ListAuthorTags:
             if tag in rep_dict.keys():
-                rep_dict[tag] = rep_dict[tag][0:max_length_authors]
+                rep_dict[tag] = rep_dict[tag][0:config.get('max_length_authors')]
 
-
+ 
     if '{T}' in rep_dict.keys():
         if ('title' in infos) and infos['title']:
             rep_dict['{T}'] = infos['title']
@@ -235,7 +243,8 @@ def build_filename(infos,   format, tags,
 
     for key in rep_dict.keys():
         format = format.replace(key, rep_dict[key])
+
     filename = sanitize(format)
     #Check that the filename string is not longer than max_length_filename, and truncate it in case. 
-    filename = filename[0:max_length_filename]
+    filename = filename[0:config.get('max_length_filename')]
     return filename
