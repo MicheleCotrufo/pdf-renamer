@@ -1,60 +1,91 @@
 import configparser
 import os
+import logging
+
 
 class config():
-    params={'verbose'   :   True,
+    #Default values for all parameters. If the file settings.ini is absent, these values are used
+    __params={'verbose'   :   True,
             'format' : "{YYYY} - {Jabbr} - {A3etal} - {T}",
             'max_length_authors' : 80,
             'max_length_filename' : 250,
-            'numb_results_google_search' : 6
+            'check_subfolders' : False
             }
-        
-    def __init__(self):
-        self.ReadParamsINIfile()
+    __setters = __params.keys()
 
-    def update_params(self,new_params):
-        self.params.update(new_params)
 
-    def ReadParamsINIfile(self):
+    @staticmethod
+    def update_params(new_params):
+        config.__params.update(new_params)
+
+    @staticmethod
+    def get(name):
+        return config.__params[name]
+
+    @staticmethod
+    def set(name, value):
+        if name in config.__setters:
+             config.__params[name] = value
+        else:
+            raise NameError("Name not accepted in set() method")
+        #Here we define additional actions to perform when specific parameters are modified
+        if name == 'verbose':
+            # We change the logger verbosity
+            if value: loglevel = logging.INFO
+            else: loglevel = logging.CRITICAL
+            logger = logging.getLogger("pdf-renamer")
+            logger.setLevel(level=loglevel)
+
+    @staticmethod
+    def ReadParamsINIfile():
         '''
         Reads the parameters stored in the file settings.ini, and stores them in the dict self.params
+        If the .ini file does not exist, it creates it with the default values.
         '''
         path_current_directory = os.path.dirname(__file__)
         path_config_file = os.path.join(path_current_directory, 'settings.ini')
-        config = configparser.ConfigParser()
-        config.read(path_config_file)
-        self.params.update(dict(config['DEFAULT']))
-        self.ConvertParamsToNumb()
+        if not(os.path.exists(path_config_file)):
+            config.WriteParamsINIfile()
+        else:
+            config_object = configparser.ConfigParser()
+            config_object.optionxform = str
+            config_object.read(path_config_file)
+            config.__params.update(dict(config_object['DEFAULT']))
+            config.ConvertParamsToBool()
+            config.ConvertParamsToNumb()
 
-    def ConvertParamsToNumb(self):
-        for key,val in self.params.items():
-            if val.isdigit():
-                self.params[key]=int(val)
+    @staticmethod
+    def ConvertParamsToBool():
+        for key,val in config.__params.items():
+            if isinstance(val, str):
+                if val.lower() == 'true':
+                    config.__params[key]=True
+                if val.lower() == 'false':
+                    config.__params[key]=False
 
+    @staticmethod
+    def ConvertParamsToNumb():
+        for key,val in config.__params.items():
+            if isinstance(val, str) and val.isdigit():
+                config.__params[key]=int(val)
+    @staticmethod
+    def print():
+        '''
+        Prints all settings
+        '''
+        for key,val in config.__params.items():
+            print(key + " : " + str(val) + ' ('+type(val).__name__+')')
 
-    def WriteParamsINIfile(self):
+    @staticmethod
+    def WriteParamsINIfile():
         '''
         Writes the parameters currently stored in in the dict self.params into the file settings.ini
         '''
-        params_dict = {key: str(value) for key, value in (self.params).items()} #Make sure that each value of the dict is converted to a string
         path_current_directory = os.path.dirname(__file__)
         path_config_file = os.path.join(path_current_directory, 'settings.ini')
-        config = configparser.ConfigParser()
-        #config.read(path_config_file)   #Read the current values of the parameters in settings.ini
-        #paramsOLD = config['DEFAULT']
-        #paramsOLD.update(params_dict) #Update the new values
-        config['DEFAULT'] = self.params
+        config_object = configparser.ConfigParser()
+        config_object.optionxform = str
+        config_object['DEFAULT'] = config.__params
         with open(path_config_file, 'w') as configfile: #Write them on file
-            config.write(configfile)
-
-Config = config()
-#Config.params['max_length_filename'] = 500
-#Config.WriteParamsINIfile()
-#params_dict = ReadParamsINIfile() #Read the current value of parameters when config.py gets first loaded (which happens when the whole module gets imported)
-#for key,val in params_dict.items():
-#    if val.isdigit():
-#        exec(key + '=int(val)')
-#    else:
-#        exec(key + '=val')
-
+            config_object.write(configfile)
 
