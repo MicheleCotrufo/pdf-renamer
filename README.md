@@ -95,9 +95,9 @@ Several tags (as listed above) can be used to change the standard filename forma
 $ pdfrenamer 'path/to/target' -f "{YYYY} - {Aetal} - {J} - {T}"
 ```
 will produce filenames which start with the year of publication, followed by first initial and full last name of first author + et al. (if more authors are present), followed by the full
-journal name and the paper title.  Note that *the tags are case sensitive*.
-Other useful settings, MAX_LENGTH_AUTHORS and MAX_LENGTH_FILENAME, which set the maximum length allowed for the author information and the overall filename. 
-The values of all these settings can be specified together, e.g.
+journal name and the paper title.  Note that **the tags are case sensitive**.
+Other useful settings are MAX_LENGTH_AUTHORS and MAX_LENGTH_FILENAME, which set the maximum lengths allowed for the author information and the overall filename, respectively. 
+The values of all these settings can be specified simultaneously, e.g.
 ```
 $ pdfrenamer 'path/to/target' -f "{YYYY} - {Aetal} - {J} - {T}" -max_length_authors 40 -max_length_filename 200
 ```
