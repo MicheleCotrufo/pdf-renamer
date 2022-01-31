@@ -9,7 +9,7 @@ import pdf2bib
 import pdfrenamer.config as config
 import logging
 import unidecode
-logger = logging.getLogger("pdf_renamer")
+logger = logging.getLogger("pdf-renamer")
 
 AllowedTags = {"{YYYY}":" \t\t=\t Year of publication",
                 "{MM}":" \t\t=\t Month of publication (in digits)",
@@ -67,7 +67,7 @@ def sanitize(string):
             string = string.replace(k, i)
     string = re.sub(r"{\\hspace{.*}}", "",string)
 
-    #Step 2. Find all substrings in the format {\string1{string2}} and replace them by string2
+    #Step 2. Find all substrings in the format {\string1{string2}} (e.g. {\`{u}}) and replace them by string2
     #We use the function remove_latex_codes defined in the pdf2bib package
     string = pdf2bib.remove_latex_codes(string)
 
@@ -145,8 +145,9 @@ def build_filename(infos,   format = None, tags=None):
     if not format: format = config.get('format')
     rep_dict =  dict.fromkeys(tags) #Initialize a dictionary with keys equal to the elements of the list tags, and all the values set to None
 
-    for key in infos.keys():
-        infos[key] = str(infos[key])
+    for key,value in infos.items():
+        if type(value) in (float,int):
+            infos[key] = str(value)
 
     #Now we look in the keys of the 'rep_dict' dictionary and populate the values of the dictionary
     #by using the information contained in the 'infos' dictionary
@@ -192,15 +193,22 @@ def build_filename(infos,   format = None, tags=None):
         author_info = infos['author']
     if 'authors' in infos.keys() and len(infos['authors'])>len(author_info):
         author_info = infos['authors']
-
+    
     ListAuthorTags = ['{Aall}','{A3etal}','{Aetal}','{aAall}','{aA3etal}','{aAetal}']
-    if any(item in rep_dict.keys() for item in ListAuthorTags):
+    if any(item in rep_dict.keys() for item in ListAuthorTags): #Chec if any of the tag chosen by the user is one of the author tags defined in ListAuthorTags
         if author_info:
-            #IMPORTANT: Here it is assumed that the string containing the authors names is in the format "firstname1, secondname1 ...  lastname1 and firstname2, secondname2 ...  lastname2 etc."
-            authors = [author.strip() for author in author_info.split(" and ")]
-            lastnames = [name.split()[-1] for name in authors]
-            firstnames = [name.split()[:-1] if len(name.split())>1 else [''] for name in authors]   #   The check on len(name.split())>1 is necessary to address the case in which
-            if lastnames:                                                                                        #   the string name contains only one words (e.g. only the last name of the author is available)
+            # The variable author_info comes from the metadata genereated by pdf2bib, and its type/value depend on how the metadata was retrieved.
+            # It will be either a string in the format "firstname1, secondname1 ...  lastname1 and firstname2, secondname2 ...  lastname2 etc."
+            # or a list of dictionaries in the format  [{'given': 'Name1', 'family': 'LastName1'}, {'given': 'Name2', 'family': 'LastName2'}, ... [{'given': 'NameN', 'family': 'LastNameN'}]
+            if isinstance(author_info,list):
+                lastnames = [author['family'] for author in author_info if 'family' in author]
+                firstnames = [author['given'] for author in author_info if 'given' in author]
+            elif isinstance(author_info,str):
+                authors = [author.strip() for author in author_info.split(" and ")]
+                lastnames = [name.split()[-1] for name in authors]
+                firstnames = [name.split()[:-1] if len(name.split())>1 else [''] for name in authors]   # The check on len(name.split())>1 is necessary to address the case in which                                                                                     #  the string name contains only one words (e.g. only the last name of the author is available)    
+            
+            if lastnames:                                                                                        
                 rep_dict['{Aall}'] = ", ".join(lastnames)
                 rep_dict['{A3etal}'] = ", ".join(lastnames[0:3])
                 if len(lastnames)>3:
@@ -224,8 +232,8 @@ def build_filename(infos,   format = None, tags=None):
                 for tag in ListAuthorTags:
                     rep_dict[tag] = '[NoAuthor]'
 
-        else: #if author_info evalues to False, it means that it is an empty string, and thus the 'author' or 'authors' tags were not present
-              # in the bibtex entry
+        else: #if author_info evalues to False, it means that it is either an empty string or an empty list, and thus the 'author' or 'authors' info were not present
+              # in the bibtex metadata
             for tag in ListAuthorTags:
                 rep_dict[tag] = '[NoAuthor]'
 
