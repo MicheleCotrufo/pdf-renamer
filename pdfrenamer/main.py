@@ -3,12 +3,14 @@ import logging
 import bibtexparser
 import pathlib
 import os
+#from os import path, listdir, scandir
 import pdf2bib
-from argparse import RawTextHelpFormatter
-import itertools
-import pkgutil
+#import itertools
+#import pkgutil
 import pdfrenamer.config as config
 from pdfrenamer.filename_creators import build_filename, AllowedTags, check_format_is_valid
+import traceback
+import sys
 
 logger = logging.getLogger("pdf-renamer")
 
@@ -30,14 +32,16 @@ def rename(target, format=None, tags=None):
     results, dictionary or list of dictionaries (or None if an error occured)
         The output is a single dictionary if target is a file, or a list of dictionaries if target is a directory, 
         each element of the list describing one file. Each dictionary has the following keys
-        result['path_original'] = path of the pdf file (with the original filename)
-        result['path_new'] = path of the pdf file, with the new filename, or None if it was not possible to generate a new filename
-        result['identifier'] = DOI or other identifier (or None if nothing is found)
-        result['identifier_type'] = string specifying the type of identifier (e.g. 'doi' or 'arxiv')
-        result['validation_info'] = Additional info on the paper possibly returned by the pdf2doi library
+        result['path_original']     = path of the pdf file (with the original filename)
+        result['path_new']          = path of the pdf file, with the new filename, or None if it was not possible to generate a new filename
+        result['identifier']        = DOI or other identifier (or None if nothing is found)
+        result['identifier_type']   = String specifying the type of identifier (e.g. 'doi' or 'arxiv')
+        result['validation_info']   = Additional info on the paper. If config.get('webvalidation') = True, then result['validation_info']
+                                      will typically contain raw bibtex data for this paper. Otherwise it will just contain True 
+        result['path']              = Path of the pdf file
+        result['method']            = Method used by pdf2doi to find the identifier
         result['metadata']          = Dictionary containing bibtex info
         result['bibtex']            = A string containing a valid bibtex entry
-        result['method'] = method used to find the identifier
 
     '''
     
@@ -89,7 +93,7 @@ def rename(target, format=None, tags=None):
                 files_processed.append(result)
             logger.info("................") 
 
-        #If there are subfolders, and if check_subfolders==True, we call gain this function for each subfolder
+        #If there are subfolders, and if config.get('check_subfolders')==True, we call gain this function for each subfolder
         numb_subfolders = len(subfolders)
         if numb_subfolders:
             logger.info(f"Found {numb_subfolders} subfolder(s)")
@@ -124,13 +128,13 @@ def rename(target, format=None, tags=None):
             #if pdf2bib was able to find an identifer, and thus to retrieve the bibtex data, we use them to rename the file
             if result['metadata'] and result['identifier']:
                 logger.info(f"Found bibtex data and an identifier for this file: {result['identifier']} ({result['identifier_type']}).")
-                metadata = result['metadata']
-                metadata_string = "\n\t\t"+"\n\t\t".join([f"{key} = \"{metadata[key]}\"" for key in metadata.keys()] ) 
+                metadata = result['metadata'].copy()
+                metadata_string = "\n\t"+"\n\t".join([f"{key} = \"{metadata[key]}\"" for key in metadata.keys()] ) 
                 logger.info("Found the following data:" + metadata_string)
 
                 #Generate the new name by calling the function build_filename
                 NewName = build_filename(metadata, format, tags)
-                ext = os.path.splitext(filename)[-1].lower()
+                ext = os.path.splitext(filename)[-1].lower() #Extract the file extension from the old file name
                 directory = pathlib.Path(filename).parent
                 NewPath = str(directory) + os.path.sep + NewName
                 NewPathWithExt = NewPath + ext
@@ -152,19 +156,22 @@ def rename(target, format=None, tags=None):
                 logger.info("The pdf2doi library was not able to find an identifier for this pdf file.")
                 result['path_new'] = None
         except Exception as e: 
+            print(traceback.format_exc())
+            # or
+            print(sys.exc_info()[2])
             logger.error('Some unexpected error occured while using pdf2bib to process this file: \n '+ str(e))
+            result['path_new'] = None
 
         return result 
 
 def rename_file(old_path,new_path,ext):
-    #It renames the file in old_path with the new name contained in new_path. 
+    #It attempts to rename the file in old_path with the new name contained in new_path. 
     #If another file with the same name specified by new_path already exists in the same folder, it adds an 
     #incremental number (e.g. "filename.pdf" becomes "filename (2).pdf")
 
     if not os.path.exists(old_path):
         raise ValueError(f"The file {old_path} does not exist")
     i=1
-
     while True:
         New_path = new_path + (f" ({i})" if i>1 else "") + ext
         if os.path.exists(New_path):
@@ -210,15 +217,15 @@ def main():
     parser = argparse.ArgumentParser( 
                                     description = "Automatically renames pdf files of scientific publications by retrieving their identifiers (e.g. DOI or arxiv ID) and looking up their bibtex infos.",
                                     epilog = "",
-                                    formatter_class=RawTextHelpFormatter)
+                                    formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument(
                         "path",
                         help = "Relative path of the pdf file or of a folder.",
                         metavar = "path",
                         nargs = '*')
-    parser.add_argument("-v",
-                        "--verbose",
-                        help="Increase verbosity. By default (i.e. when not using -v), only the a summary of the name changes will be printed in the end.",
+    parser.add_argument("-s",
+                        "--decrease_verbose",
+                        help="Decrease verbosity. By default (i.e. when not using -s), all steps performed by pdf-renamer, pdf2dbib and pdf2doi are documented.",
                         action="store_true")
     parser.add_argument('-f', 
                         help=f"Format of the new filename. Default = \"{config.get('format')}\".\n"+
@@ -227,7 +234,7 @@ def main():
                         action="store", dest="format", type=str, default=config.get('format'))
     parser.add_argument("-sf",
                         "--sub_folders",
-                        help="Rename also pdf files contained in subfolders of target folder.",
+                        help=f"Rename also pdf files contained in subfolders of target folder. Default = \"{config.get('check_subfolders')}\".",
                         action="store_true")
     parser.add_argument('-max_length_authors', 
                         help=f"Sets the maximum length of any string related to authors (default={str(config.get('max_length_authors'))}).",
@@ -237,8 +244,8 @@ def main():
                         action="store", dest="max_length_filename", type=int, default=config.get('max_length_filename'))
     parser.add_argument(
                         "-add_abbreviation_file",
-                        help="The content of the text file specified by PATH_ABBREVIATION_FILE will be added to the list of journal abbreviations.\n"+
-                        "Each row of the text file must have the format \'FULL NAME = ABBREVIATION\'. Note: when this argument is passed, all other arguments are ignored.",
+                        help="The content of the text file specified by PATH_ABBREVIATION_FILE will be added to the user list of journal abbreviations.\n"+
+                        "Each row of the text file must have the format \'FULL NAME = ABBREVIATION\'.",
                         action="store", dest="path_abbreviation_file", type=str)
     parser.add_argument(
                         "-sd",
@@ -259,38 +266,45 @@ def main():
     
     args = parser.parse_args()
 
+    # Setup logging
+    config.set('verbose',not(args.decrease_verbose)) #store the desired verbose level in the global config of pdf-renamer. This will also automatically update the pdf2bib and pdf2doi logger level.
+    logger = logging.getLogger("pdf-renamer")
+
     #If the command -install--right--click was specified, it sets the right keys in the system registry
     if args.install_right_click:
+        config.set('verbose',True)
         import pdfrenamer.utils_registry as utils_registry
         utils_registry.install_right_click()
         return
     if args.uninstall_right_click:
+        config.set('verbose',True)
         import pdfrenamer.utils_registry as utils_registry
         utils_registry.uninstall_right_click()
         return
-
-    # Setup logging
-    config.set('verbose',args.verbose) #store the desired verbose level in the global config of pdf-renamer. This will also automatically update the logger level.
-    pdf2bib.config.set('verbose',args.verbose) #store the desired verbose level in the global config of pdf2bib. This will also automatically update the logger level.
-
-    logger = logging.getLogger("pdf-renamer")
 
     if args.path_abbreviation_file:
         add_abbreviations(args.path_abbreviation_file)
         return
 
-    config.set('format' , args.format)
-    config.set('max_length_authors' , args.max_length_authors)
-    config.set('max_length_filename' , args.max_length_filename)
+    if (check_format_is_valid(args.format)):
+        config.set('format' , args.format)
+    if (isinstance(args.max_length_authors,int) and args.max_length_authors>0):
+        config.set('max_length_authors' , args.max_length_authors)
+    else:
+        logger.error(f"The specified value for max_length_authors is not valid.")
+    if (isinstance(args.max_length_filename,int) and args.max_length_filename>0):
+        config.set('max_length_filename' , args.max_length_filename)
+    else:
+        logger.error(f"The specified value for max_length_filename is not valid.")
     config.set('check_subfolders' , args.sub_folders)
 
     if args.set_default:
-        logger.info("Storing the settings specified by users as default values...")
+        logger.info("Storing the settings specified by the user (if any is valid) as default values...")
         config.WriteParamsINIfile()
         logger.info("Done.")
 
-    ## The following block of code (until ##END) is required to make sure that 'path' is a required parameter, except for the case when
-    ## -install--right--click or -uninstall--right--click are used
+    ## The following block of code (until ##END) is required to make sure that 'path' is considered a required parameter, except for the case when
+    ## -install--right--click or -uninstall--right--click are used, or when the user is setting default values for some of the parameters
     if isinstance(args.path,list):
         if len(args.path)>0:
             target = args.path[0]
@@ -298,47 +312,54 @@ def main():
             target = ""
     else:
         target = args.path
-
     if target == "" and not (args.set_default):
         print("pdfrenamer: error: the following arguments are required: path. Type \'pdfrenamer --h\' for a list of commands.")
     if target == "": #This occurs either if the user forgot to add a target, or if the user used the -sd command to set default values
         return
     ## END
 
+    if(args.decrease_verbose==True):
+        print(f"(All intermediate output will be suppressed. To see additional outuput, do not use the command -s)")
     results = rename(target=target)
 
     if results==None:  #This typically happens when target is neither a valid file nor a valid directory. In this case we stop
-        return         #the script execution here. Proper error message are raised by the rename function
+        return         #the script execution here. Proper error messages were raised by the rename function
 
     if  os.path.isdir(target):
         target = os.path.join(target, '') #This makes sure that, if target is a path to a directory, it has the ending "/" or "\"
     MainPath = os.path.dirname(target) #Extract the path of target. If target is a directory, then MainPath = target
-    print("Summaries of changes done:")    
+
+    from colorama import init,Fore, Back, Style
+    init(autoreset=True)
+    print(Fore.RED + "Summaries of changes done:")
 
     if not isinstance(results,list):
         results = [results]
     
     counter = 0
     counter_identifier_notfound = 0
+
     for result in results:
-        if result and result['identifier']:
+        if result and result['identifier'] and result['path_new']:
             if not(result['path_original']==result['path_new']):
-                print(f"\'{os.path.relpath(result['path_original'],MainPath)}\' --> \'{os.path.relpath(result['path_new'],MainPath)}\'")
+                print(Fore.YELLOW + f"{os.path.relpath(result['path_original'],MainPath)}")
+                print(Fore.MAGENTA + f"---> {os.path.relpath(result['path_new'],MainPath)}")
                 counter = counter + 1
         else : 
             counter_identifier_notfound = counter_identifier_notfound + 1
+
     if counter==0:
         print("No file has been renamed.")
     else:
         print(f"{counter} file" + ("s have " if counter>1 else " has ") + "been renamed.")
 
     if counter_identifier_notfound > 0:
-        print("The following pdf files could not be renamed because it was not possile to automatically find " +
+        print(Fore.RED +"The following pdf files could not be renamed because it was not possile to automatically find " +
               "the publication identifier (DOI or arXiv ID). Try to manually add a valid identifier to each file via " +
               "the command \"pdf2doi 'filename.pdf' -id 'valid_identifier'\" and then run again pdf-renamer.")  
         for result in results:
             if not(result['identifier']):
-                logger.info(f"{result['path_original']}")
+                print(f"{result['path_original']}")
     return
 
 if __name__ == '__main__':
