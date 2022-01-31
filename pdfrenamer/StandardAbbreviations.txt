@@ -11861,7 +11861,6 @@ Physical Review Letters = Phys. Rev. Lett.
 Physical Review Special Topics - Accelerators and Beams = Phys. Rev. Spec. Top. Accel Beams
 Physical Review Special Topics - Physics Education Research = Phys. Rev. Spec. Top. Phys. Educ. Res.
 Physical Review X = Phys. Rev. X
-Physical Review. E, Statistical, Nonlinear, and Soft Matter Physics = Phys. Rev. E Stat. Nonlin. Soft Matter Phys.
 Physical Separaion in Science and Engineering = Phys. Sep. Sci. Eng.
 Physical Therapy = Phys. Ther.
 Physician Assistant = Physician Assist.
