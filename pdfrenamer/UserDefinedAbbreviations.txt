@@ -1,0 +1,13 @@
+Physical Review A = PRA
+Physical Review A: Atomic, Molecular, and Optical Physics = PRA
+Physical Review Applied = PRAppl
+Physical Review B = PRB
+Physical Review B: Condensed Matter = PRB
+Physical Review B: Condensed Matter and Materials Physics = PRB
+Physical Review C: Nuclear Physics = PRC
+Physical Review D = PRD
+Physical Review D: Particles and Fields = PRD
+Physical Review E: Statistical Physics, Plasmas, Fluids, and Related Interdisciplinary Topics = PRE
+Physical Review E: Statistical, Nonlinear, and Soft Matter Physics = PRE
+Physical Review Letters = PRL
+Physical Review X = PRX
