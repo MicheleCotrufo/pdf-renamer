@@ -30,11 +30,18 @@ class config():
             raise NameError("Name not accepted in set() method")
         #Here we define additional actions to perform when specific parameters are modified
         if name == 'verbose':
-            # We change the logger verbosity
+            # We change the logger verbosity for this package and and also for pdf2bib and pdf2doi
             if value: loglevel = logging.INFO
             else: loglevel = logging.CRITICAL
             logger = logging.getLogger("pdf-renamer")
             logger.setLevel(level=loglevel)
+            try:
+                logger = logging.getLogger("pdf2bib")
+                logger.setLevel(level=loglevel)
+                logger = logging.getLogger("pdf2doi")
+                logger.setLevel(level=loglevel)
+            except:
+                pass
 
     @staticmethod
     def ReadParamsINIfile():
