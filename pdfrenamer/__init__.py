@@ -1,7 +1,5 @@
 import logging
 
-import logging
-
 # Setup logging
 logger = logging.getLogger("pdf-renamer")
 logger.setLevel(level=logging.INFO)
