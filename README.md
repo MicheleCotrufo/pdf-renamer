@@ -23,7 +23,7 @@ bibliographic data of a paper starting from a .pdf file. The retrieved data can 
 Use the package manager pip to install ```pdf-renamer```.
 
 ```bash
-pip install pdfrenamer==1.0rc2
+pip install pdf-renamer==1.0rc2
 ```
 This will install ```pdf-renamer``` as  Python package, but also as a stand-alone executable script. 
 The executable will be installed in a directory whose path depends on the type of Python installation and the operating system. 
@@ -101,11 +101,11 @@ The values of all these settings can be specified simultaneously, e.g.
 ```
 $ pdfrenamer 'path/to/target' -f "{YYYY} - {Aetal} - {J} - {T}" -max_length_authors 40 -max_length_filename 200
 ```
-The values set FORMAT, MAX_LENGTH_AUTHORS and MAX_LENGTH_FILENAME, however, are not permanently changed, unless the optional command ```-sd``` (set default) is added,
+The values set for FORMAT, MAX_LENGTH_AUTHORS and MAX_LENGTH_FILENAME, however, are not permanently changed, unless the optional command ```-sd``` (set default) is added,
 ```
 $ pdfrenamer 'path/to/target' -f "{YYYY} - {Aetal} - {J} - {T}" -max_length_authors 40 -max_length_filename 200 -sd
 ```
-In this case the values soecified are saved in a settings.ini file inside the ```pdf-renamer``` folder (as can be checked by typing ```pdfrenamer --h``` again).
+In this case the new values are saved in a settings.ini file inside the ```pdf-renamer``` folder (as can be checked by typing ```pdfrenamer --h``` again).
 
 
 
