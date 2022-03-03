@@ -26,9 +26,9 @@ Use the package manager pip to install ```pdf-renamer```.
 pip install pdf-renamer==1.0rc2
 ```
 This will install ```pdf-renamer``` as  Python package, but also as a stand-alone executable script. 
-The executable will be installed in a directory whose path depends on the type of Python installation and the operating system. 
-Make sure that this directory is in the ```PATH``` variable of your operating system (for standard python installations under Windows this should be already the case). 
-Check how to do add the folder to the ```PATH``` variable for [Windows](https://www.google.com/search?q=python+add+script+folder+to+path+windows), 
+The executable will be installed in a directory whose path depends on your Python installation and operating system. 
+Make sure that this directory is added to the ```PATH``` variable of your operating system (for standard Python installations under Windows this should be already the case). 
+You can check how to do add the folder to the ```PATH``` variable for [Windows](https://www.google.com/search?q=python+add+script+folder+to+path+windows), 
 [Mac](https://www.google.com/search?q=python+add+script+folder+to+path+mac) and [Linux](https://www.google.com/search?q=python+add+script+folder+to+path+linux).
 
 Under Windows, it is also possible to add [shortcuts to the right-click context menu](#installing-the-shortcuts-in-the-right-click-context-menu-of-windows).
@@ -96,12 +96,12 @@ $ pdfrenamer 'path/to/target' -f "{YYYY} - {Aetal} - {J} - {T}"
 ```
 will produce filenames which start with the year of publication, followed by first initial and full last name of first author + et al. (if more authors are present), followed by the full
 journal name and the paper title.  Note that **the tags are case sensitive**.
-Other useful settings are MAX_LENGTH_AUTHORS and MAX_LENGTH_FILENAME, which set the maximum lengths allowed for the author information and the overall filename, respectively. 
+Other useful settings are `-max_length_authors` and `-max_length_filename`, which set the maximum lengths allowed for the author information and the overall filename, respectively. 
 The values of all these settings can be specified simultaneously, e.g.
 ```
 $ pdfrenamer 'path/to/target' -f "{YYYY} - {Aetal} - {J} - {T}" -max_length_authors 40 -max_length_filename 200
 ```
-The values set for FORMAT, MAX_LENGTH_AUTHORS and MAX_LENGTH_FILENAME, however, are not permanently changed, unless the optional command ```-sd``` (set default) is added,
+The values set for the format (via the `-f` command), `-max_length_authors` and `-max_length_filename`, however, are not permanently changed, unless the optional command ```-sd``` (set default) is added,
 ```
 $ pdfrenamer 'path/to/target' -f "{YYYY} - {Aetal} - {J} - {T}" -max_length_authors 40 -max_length_filename 200 -sd
 ```
