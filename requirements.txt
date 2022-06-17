@@ -1,4 +1,4 @@
-pdf2doi>=1.0.1
+pdf2doi>=1.2
 pdf2bib>=1.0.3
 bibtexparser>=1.2.0
 colorama
