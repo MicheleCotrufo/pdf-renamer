@@ -345,7 +345,7 @@ def main():
                 print(Fore.YELLOW + f"{os.path.relpath(result['path_original'],MainPath)}")
                 print(Fore.MAGENTA + f"---> {os.path.relpath(result['path_new'],MainPath)}")
                 counter = counter + 1
-        else : 
+        elif not (result['identifier']): 
             counter_identifier_notfound = counter_identifier_notfound + 1
 
     if counter==0:
