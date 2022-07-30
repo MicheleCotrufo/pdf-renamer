@@ -23,12 +23,12 @@ bibliographic data of a paper starting from a .pdf file. The retrieved data can 
 Use the package manager pip to install ```pdf-renamer```.
 
 ```bash
-pip install pdf-renamer==1.0rc4
+pip install pdf-renamer==1.0rc6
 ```
 This will install ```pdf-renamer``` as  Python package, but also as a stand-alone executable script. 
 The executable will be installed in a directory whose path depends on your Python installation and operating system. 
 Make sure that this directory is added to the ```PATH``` variable of your operating system (for standard Python installations under Windows this should be already the case). 
-You can check how to do add the folder to the ```PATH``` variable for [Windows](https://www.google.com/search?q=python+add+script+folder+to+path+windows), 
+You can check how to add the folder to the ```PATH``` variable for [Windows](https://www.google.com/search?q=python+add+script+folder+to+path+windows), 
 [Mac](https://www.google.com/search?q=python+add+script+folder+to+path+mac) and [Linux](https://www.google.com/search?q=python+add+script+folder+to+path+linux).
 
 Under Windows, it is also possible to add [shortcuts to the right-click context menu](#installing-the-shortcuts-in-the-right-click-context-menu-of-windows).
@@ -90,9 +90,12 @@ options:
   -add_abbreviation_file PATH_ABBREVIATION_FILE
                         The content of the text file specified by PATH_ABBREVIATION_FILE will be added to the user list of journal abbreviations.
                         Each row of the text file must have the format 'FULL NAME = ABBREVIATION'.
-  -sd, --set_default    By adding this command, any value specified (in this same command) for the filename format (-f), max length of author string (-max_length_authors), max length of filename string (-max_length_filename) will be also stored as default value(s) for the future.
+  -sd, --set_default    By adding this command, any value specified (in this same command) for the filename format (-f),
+                        max length of author string (-max_length_authors), max length of filename string (-max_length_filename),
+                        max number of title words (-max_words_title), and case (-case) will be also stored as default value(s) for the future.
   -install--right--click
-                        Add a shortcut to pdf-renamer in the right-click context menu of Windows. You can rename a single pdf file (or all pdf files in a folder) by just right clicking on it! NOTE: this feature is only available on Windows.
+                        Add a shortcut to pdf-renamer in the right-click context menu of Windows. You can rename a single pdf file (or all pdf files in a folder) by just right clicking on it!
+                        NOTE: this feature is only available on Windows.
   -uninstall--right--click
                         Uninstall the right-click context menu functionalities. NOTE: this feature is only available on Windows.
 ```

@@ -258,14 +258,15 @@ def main():
     parser.add_argument(
                         "-sd",
                         "--set_default",
-                        help="By adding this command, any value specified (in this same command) for the filename format (-f), "+
-                        "max length of author string (-max_length_authors), max length of filename string (-max_length_filename) "+
-                        "will be also stored as default value(s) for the future.",
+                        help=f"By adding this command, any value specified (in this same command) for the filename format (-f),\n"+
+                        "max length of author string (-max_length_authors), max length of filename string (-max_length_filename),\n"+
+                        "max number of title words (-max_words_title), and case (-case) will be also stored as default value(s) for the future.",
                         action="store_true")
     parser.add_argument("-install--right--click",
                         dest="install_right_click",
                         action="store_true",
-                        help="Add a shortcut to pdf-renamer in the right-click context menu of Windows. You can rename a single pdf file (or all pdf files in a folder) by just right clicking on it! NOTE: this feature is only available on Windows.")
+                        help=f"Add a shortcut to pdf-renamer in the right-click context menu of Windows. You can rename a single pdf file (or all pdf files in a folder) by just right clicking on it!\n"+
+                       "NOTE: this feature is only available on Windows.")
     parser.add_argument("-uninstall--right--click",
                         dest="uninstall_right_click",
                         action="store_true",
