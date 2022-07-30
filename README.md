@@ -50,15 +50,16 @@ Type
 
 ```
 $ pdfrenamer --h
-usage: pdfrenamer [-h] [-s] [-f FORMAT] [-sf] [-max_length_authors MAX_LENGTH_AUTHORS] [-max_length_filename MAX_LENGTH_FILENAME] [-add_abbreviation_file PATH_ABBREVIATION_FILE] [-sd] [-install--right--click] [-uninstall--right--click]
-                  [path [path ...]]
+usage: pdfrenamer [-h] [-s] [-f FORMAT] [-sf] [-max_length_authors MAX_LENGTH_AUTHORS] [-max_length_filename MAX_LENGTH_FILENAME] [-max_words_title MAX_WORDS_TITLE] [-case CASE] [-add_abbreviation_file PATH_ABBREVIATION_FILE] [-sd]
+                  [-install--right--click] [-uninstall--right--click]
+                  [path ...]
 
 Automatically renames pdf files of scientific publications by retrieving their identifiers (e.g. DOI or arxiv ID) and looking up their bibtex infos.
 
 positional arguments:
   path                  Relative path of the pdf file or of a folder.
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -s, --decrease_verbose
                         Decrease verbosity. By default (i.e. when not using -s), all steps performed by pdf-renamer, pdf2dbib and pdf2doi are documented.
@@ -68,19 +69,24 @@ optional arguments:
                         {MM}            =        Month of publication (in digits)
                         {DD}            =        Day of publication (in digits)
                         {J}             =        Full name of Journal
-                        {Jabbr}         =        Abbreviated name of Journal, if any available (otherwise full name is used).
+                        {Jabbr}         =        Abbreviated name of Journal, if any available (otherwise full name is used)
                         {Aall}          =        Last name of all authors (separated by comma)
                         {Aetal}         =        Last name of the first author, add 'et al.' if more authors are present
                         {A3etal}        =        Last name of the first three authors (separated by comma), add 'et al.' if more authors are present
                         {aAall}         =        First initial and last name of all authors (separated by comma)
                         {aAetal}        =        First initial and last name of the first author, add 'et al.' if more authors are present
                         {aA3etal}       =        First initial and last name of the first three authors (separated by comma), add 'et al.' if more authors are present
-                        {T}             =        Title.
+                        {T}             =        Title
   -sf, --sub_folders    Rename also pdf files contained in subfolders of target folder. Default = "False".
   -max_length_authors MAX_LENGTH_AUTHORS
                         Sets the maximum length of any string related to authors (default=80).
   -max_length_filename MAX_LENGTH_FILENAME
                         Sets the maximum length of any generated filename. Any filename longer than this will be truncated (default=250).
+  -max_words_title MAX_WORDS_TITLE
+                        Sets the maximum number of words from the paper title to use for the filename (default=20).
+  -case CASE            Possible values are 'camel', 'snake', 'kebab', 'none' (default=none).
+                        If different from 'none', converts each tag string into either 'camel' (e.g., LoremIpsumDolorSitAmet), 'snake' (e.g., Lorem_ipsum_dolor_sit_amet), or 'kebab' case (e.g., Lorem-ipsum-dolor-sit-amet).
+                        Note: this will not affect any punctuation symbol or space contained in the filename format by the user.
   -add_abbreviation_file PATH_ABBREVIATION_FILE
                         The content of the text file specified by PATH_ABBREVIATION_FILE will be added to the user list of journal abbreviations.
                         Each row of the text file must have the format 'FULL NAME = ABBREVIATION'.
@@ -96,14 +102,14 @@ $ pdfrenamer 'path/to/target' -f "{YYYY} - {Aetal} - {J} - {T}"
 ```
 will produce filenames which start with the year of publication, followed by first initial and full last name of first author + et al. (if more authors are present), followed by the full
 journal name and the paper title.  Note that **the tags are case sensitive**.
-Other useful settings are `-max_length_authors` and `-max_length_filename`, which set the maximum lengths allowed for the author information and the overall filename, respectively. 
-The values of all these settings can be specified simultaneously, e.g.
+Other useful settings are `-max_length_authors`, `-max_length_filename` and `-max_words_title`, which set, respectively, the maximum number of characters allowed for the author string and for the overall filename, and the maximum nunber of words that will be used from the title.
+The optional command  `-case CASE` can be used to convert all substrings (such as title, journal, etc.) to either the camel, snake or kebab case. The values of all these settings can be specified simultaneously, e.g.
 ```
-$ pdfrenamer 'path/to/target' -f "{YYYY} - {Aetal} - {J} - {T}" -max_length_authors 40 -max_length_filename 200
+$ pdfrenamer 'path/to/target' -f "{YYYY} - {Aetal} - {J} - {T}" -max_length_authors 40 -max_length_filename 200 -max_words_title 20 -case snake
 ```
-The values set for the format (via the `-f` command), `-max_length_authors` and `-max_length_filename`, however, are not permanently changed, unless the optional command ```-sd``` (set default) is added,
+The values set for most parameters, however, are not permanently changed, unless the optional command ```-sd``` (set default) is added,
 ```
-$ pdfrenamer 'path/to/target' -f "{YYYY} - {Aetal} - {J} - {T}" -max_length_authors 40 -max_length_filename 200 -sd
+$ pdfrenamer 'path/to/target' -f "{YYYY} - {Aetal} - {J} - {T}" -max_length_authors 40 -max_length_filename 200 -max_words_title 20  -case snake -sd
 ```
 In this case the new values are saved in a settings.ini file inside the ```pdf-renamer``` folder (as can be checked by typing ```pdfrenamer --h``` again).
 
