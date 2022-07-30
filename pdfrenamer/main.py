@@ -242,6 +242,14 @@ def main():
     parser.add_argument('-max_length_filename', 
                         help=f"Sets the maximum length of any generated filename. Any filename longer than this will be truncated (default={str(config.get('max_length_filename'))}).",
                         action="store", dest="max_length_filename", type=int, default=config.get('max_length_filename'))
+    parser.add_argument('-max_words_title', 
+                        help=f"Sets the maximum number of words from the paper title to use for the filename (default={str(config.get('max_words_title'))}).",
+                        action="store", dest="max_words_title", type=int, default=config.get('max_words_title'))
+    parser.add_argument('-case', 
+                        help=f"Possible values are 'camel', 'snake', 'kebab', 'none' (default={str(config.get('case'))}). \n"+
+                        "If different from 'none', converts each tag string into either 'camel' (e.g., LoremIpsumDolorSitAmet), 'snake' (e.g., Lorem_ipsum_dolor_sit_amet), or 'kebab' case (e.g., Lorem-ipsum-dolor-sit-amet). \n"+
+                        "Note: this will not affect any punctuation symbol or space contained in the filename format by the user.",
+                        action="store", dest="case", type=str, default=config.get('case'))
     parser.add_argument(
                         "-add_abbreviation_file",
                         help="The content of the text file specified by PATH_ABBREVIATION_FILE will be added to the user list of journal abbreviations.\n"+
@@ -288,14 +296,29 @@ def main():
 
     if (check_format_is_valid(args.format)):
         config.set('format' , args.format)
+
     if (isinstance(args.max_length_authors,int) and args.max_length_authors>0):
         config.set('max_length_authors' , args.max_length_authors)
     else:
         logger.error(f"The specified value for max_length_authors is not valid.")
+
     if (isinstance(args.max_length_filename,int) and args.max_length_filename>0):
         config.set('max_length_filename' , args.max_length_filename)
     else:
         logger.error(f"The specified value for max_length_filename is not valid.")
+    config.set('check_subfolders' , args.sub_folders)
+
+    if (isinstance(args.max_words_title,int) and args.max_words_title>0):
+        config.set('max_words_title' , args.max_words_title)
+    else:
+        logger.error(f"The specified value for max_words_title is not valid.")
+
+    if (isinstance(args.case,str) and (args.case in ['camel','snake','kebab','none'])):
+        config.set('case' , args.case)
+    else:
+        logger.error(f"The specified value for case is not valid.")
+        return
+
     config.set('check_subfolders' , args.sub_folders)
 
     if args.set_default:
