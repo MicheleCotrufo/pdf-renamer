@@ -9,7 +9,9 @@ class config():
             'format' : "{YYYY} - {Jabbr} - {A3etal} - {T}",
             'max_length_authors' : 80,
             'max_length_filename' : 250,
-            'check_subfolders' : False
+            'max_words_title' : 5,
+            'check_subfolders' : False,
+            'case' : ''
             }
     __setters = __params.keys()
 
@@ -73,7 +75,7 @@ class config():
     @staticmethod
     def ConvertParamsToNumb():
         for key,val in config.__params.items():
-            if isinstance(val, str) and val.isdigit():
+            if isinstance(val, str) and val.lstrip("-").isdigit(): #the lstrip("-") part makes sure that also strings like '-1' are recognized as valid numbers
                 config.__params[key]=int(val)
     @staticmethod
     def print():
