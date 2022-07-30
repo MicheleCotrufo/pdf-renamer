@@ -15,14 +15,18 @@ AllowedTags = {"{YYYY}":" \t\t=\t Year of publication",
                 "{MM}":" \t\t=\t Month of publication (in digits)",
                 "{DD}":" \t\t=\t Day of publication (in digits)",
                 "{J}":" \t\t=\t Full name of Journal",
-                "{Jabbr}":" \t=\t Abbreviated name of Journal, if any available (otherwise full name is used).",
+                "{Jabbr}":" \t=\t Abbreviated name of Journal, if any available (otherwise full name is used)",
                 "{Aall}":" \t\t=\t Last name of all authors (separated by comma)",
                 "{Aetal}":" \t=\t Last name of the first author, add \'et al.\' if more authors are present",
                 "{A3etal}":" \t=\t Last name of the first three authors (separated by comma), add \'et al.\' if more authors are present",
                 "{aAall}":" \t=\t First initial and last name of all authors (separated by comma)",
                 "{aAetal}":" \t=\t First initial and last name of the first author, add \'et al.\' if more authors are present",
                 "{aA3etal}":" \t=\t First initial and last name of the first three authors (separated by comma), add \'et al.\' if more authors are present",
-                "{T}":" \t\t=\t Title."}
+                "{T}":" \t\t=\t Title"
+                #"{Tcamel}":" \t=\t Title in camel case (e.g., LoremIpsumDolorSitAmet)",
+                #"{Tsnake}":" \t=\t Title in snake case (e.g., Lorem_ipsum_dolor_sit_amet)",
+                #"{Tkebab}":" \t=\t Title in kebab case (e.g., Lorem-ipsum-dolor-sit-amet)"
+                }
 
 valid_months = {'jan':'01','january':'01',
                 'feb':'02','february':'02',
@@ -36,6 +40,25 @@ valid_months = {'jan':'01','january':'01',
                 'oct':'10','october':'10',
                 'nov':'11','november':'11',
                 'dec':'12','december':'12'}
+
+def to_camel(s):
+  s = re.sub(r"([-_,\.\s]+)", " ", s).title().strip().replace(" ", "")
+  return ''.join(s)
+
+def to_snake(s):
+  s = re.sub(r"([-_,\.\s]+)", " ", s).strip().replace(" ", "_")
+  return ''.join(s)
+
+def to_kebab(s):
+  s = re.sub(r"([-_,\.\s]+)", " ", s).strip().replace(" ", "-")
+  return ''.join(s)
+
+
+string_transformations = {
+                    "camel" : to_camel,
+                    "snake" : to_snake,
+                    "kebab" : to_kebab,
+                    }
 
 def month_to_number(month_string):
     return valid_months.get(month_string,"00")
@@ -130,7 +153,7 @@ def check_format_is_valid(format):
         return None
     for tag in tags:
         if not tag in AllowedTags:
-            logger.error(f"The specified format contains \"{{{tag}}}\", which is not a valid tag.")
+            logger.error(f"The specified format contains \"{tag}\", which is not a valid tag.")
             logger.error(f"The valid tags are: " + ",".join(AllowedTags))
             return None
     return tags
@@ -242,17 +265,48 @@ def build_filename(infos,   format = None, tags=None):
             if tag in rep_dict.keys():
                 rep_dict[tag] = rep_dict[tag][0:config.get('max_length_authors')]
 
- 
+    if (config.get('max_words_title') > 0 and 'title' in infos): #check if we need to limit the number of words in the title
+        separator = " "
+        n = config.get('max_words_title')
+        title = infos['title']
+        new_title = separator.join(title.split()[:n])
+        infos['title'] = new_title
+
     if '{T}' in rep_dict.keys():
         if ('title' in infos) and infos['title']:
             rep_dict['{T}'] = infos['title']
         else:
             rep_dict['{T}'] = '[NoTitle]'
 
+    #if '{Tcamel}' in rep_dict.keys():
+    #    if ('title' in infos) and infos['title']:
+    #        rep_dict['{Tcamel}'] = to_camel(infos['title'])
+    #    else:
+    #        rep_dict['{Tcamel}'] = '[NoTitle]'
+
+    #if '{Tsnake}' in rep_dict.keys():
+    #    if ('title' in infos) and infos['title']:
+    #        rep_dict['{Tsnake}'] = to_snake(infos['title'])
+    #    else:
+    #        rep_dict['{Tsnake}'] = '[NoTitle]'
+    
+    #if '{Tkebab}' in rep_dict.keys():
+    #    if ('title' in infos) and infos['title']:
+    #        rep_dict['{Tkebab}'] = to_kebab(infos['title'])
+    #    else:
+    #        rep_dict['{Tkebab}'] = '[NoTitle]'
+
+
+    if not ( config.get('case') == 'none' ):
+        for key in rep_dict.keys():
+            rep_dict[key] = string_transformations[config.get('case')](rep_dict[key])
+
+    #Create the actual name
     for key in rep_dict.keys():
         format = format.replace(key, rep_dict[key])
 
     filename = sanitize(format)
+
     #Check that the filename string is not longer than max_length_filename, and truncate it in case. 
     filename = filename[0:config.get('max_length_filename')]
     return filename
