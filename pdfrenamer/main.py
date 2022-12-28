@@ -5,6 +5,7 @@ import pathlib
 import os
 #from os import path, listdir, scandir
 import pdf2bib
+import pdf2doi
 #import itertools
 #import pkgutil
 import pdfrenamer.config as config
@@ -118,6 +119,15 @@ def rename(target, format=None, tags=None):
         if not (filename.lower()).endswith('.pdf'):
             logger.error("The file must have .pdf extension.")
             return None
+
+        if check_if_file_was_already_renamed_with_same_format(filename,format)==True and config.get('force_rename')==False:
+            logger.info(f"Based on the pdf metadata, this file has been already renamed by pdf-renamer, and with the same filename format. " + 
+                        "Nothing will be done. To overrule this behavior add the command -fr to the pdf-renamer invokation.")
+            result = dict()
+            result['identifier'] = 'previously_found'
+            result['path_original'] = filename
+            result['path_new'] = filename
+            return result
         
         #We use the pdf2bib library to retrieve info of this file
         logger.info(f"Calling the pdf2bib library to retrieve the bibtex info of this file.")
@@ -141,11 +151,13 @@ def rename(target, format=None, tags=None):
                 logger.info(f"The new file name is {NewPathWithExt}")
                 if (filename==NewPathWithExt):
                     logger.info("The new file name is identical to the old one. Nothing will be changed")
+                    pdf2doi.add_metadata(filename,'/pdfrenamer_nameformat',format)
                     result['path_new'] = NewPathWithExt
                 else:
                     try:
                         NewPathWithExt_renamed = rename_file(filename,NewPath,ext) 
                         logger.info(f"File renamed correctly.")
+                        pdf2doi.add_metadata(NewPathWithExt_renamed ,'/pdfrenamer_nameformat',format)
                         if not (NewPathWithExt == NewPathWithExt_renamed):
                             logger.info(f"(Note: Another file with the same name was already present in the same folder, so a numerical index was added at the end).")
                         result['path_new'] = NewPathWithExt_renamed
@@ -181,6 +193,22 @@ def rename_file(old_path,new_path,ext):
             os.rename(old_path,New_path)
             return New_path
 
+def check_if_file_was_already_renamed_with_same_format(filename,format):
+    flag = False
+    try:
+        with open(filename, 'rb') as f:
+            infos = pdf2doi.get_pdf_info(f)
+            if '/pdfrenamer_nameformat' in infos.keys():
+                if infos['/pdfrenamer_nameformat'] == format:
+                    flag = True
+            return flag
+    except TypeError:
+        logger.exception("File processing error")
+        return None
+    except Exception as e:
+        logger.exception(f"File processing error: {e}")
+        return None
+    
 def add_abbreviations(path_abbreviation_file):
     #Adds the content of the text file specified by the path path_abbreviation_file at the beginning of the file UserDefinedAbbreviations.txt
     if not(os.path.exists(path_abbreviation_file)):
@@ -256,6 +284,13 @@ def main():
                         "Each row of the text file must have the format \'FULL NAME = ABBREVIATION\'.",
                         action="store", dest="path_abbreviation_file", type=str)
     parser.add_argument(
+                        "-fr",
+                        "--force_rename",
+                        help=f"By default, whenever pdf-renamer renames a pdf file by using a certain filename format, it also stores the format string into a tag of the pdf file.\n"+
+                        "In this way if pdf-renamer comes across that same file later, and the current filename format is the same as the one stored in the pdf file tag,\n"+
+                        "the file is ignored. By using this command, this behavior is overruled: pdf-renamer will always rename each file it comes across.",
+                        action="store_true")
+    parser.add_argument(
                         "-sd",
                         "--set_default",
                         help=f"By adding this command, any value specified (in this same command) for the filename format (-f),\n"+
@@ -321,6 +356,7 @@ def main():
         return
 
     config.set('check_subfolders' , args.sub_folders)
+    config.set('force_rename' , args.force_rename)
 
     if args.set_default:
         logger.info("Storing the settings specified by the user (if any is valid) as default values...")

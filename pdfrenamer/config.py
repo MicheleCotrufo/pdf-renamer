@@ -11,6 +11,7 @@ class config():
             'max_length_filename' : 250,
             'max_words_title' : 5,
             'check_subfolders' : False,
+            'force_rename' : True,
             'case' : ''
             }
     __setters = __params.keys()
