@@ -23,7 +23,7 @@ bibliographic data of a paper starting from a .pdf file. The retrieved data can 
 Use the package manager pip to install ```pdf-renamer```.
 
 ```bash
-pip install pdf-renamer==1.0rc6
+pip install pdf-renamer==1.0rc9
 ```
 This will install ```pdf-renamer``` as  Python package, but also as a stand-alone executable script. 
 The executable will be installed in a directory whose path depends on your Python installation and operating system. 
