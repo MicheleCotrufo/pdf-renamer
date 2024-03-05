@@ -379,7 +379,7 @@ def main():
     ## END
 
     if(args.decrease_verbose==True):
-        print(f"(All intermediate output will be suppressed. To see additional outuput, do not use the command -s)")
+        print(f"(All intermediate output will be suppressed. To see additional output, do not use the command -s)")
     results = rename(target=target)
 
     if results==None:  #This typically happens when target is neither a valid file nor a valid directory. In this case we stop
