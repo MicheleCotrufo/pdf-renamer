@@ -296,8 +296,8 @@ def main():
     parser.add_argument(
                         "-fr",
                         "--force_rename",
-                        help=f"By default, whenever pdf-renamer renames a pdf file by using a certain filename format, it also stores the format string into a tag of the pdf file.\n"+
-                        "In this way if pdf-renamer comes across that same file later, and the current filename format is the same as the one stored in the pdf file tag,\n"+
+                        help=f"By default, whenever pdf-renamer renames a pdf file by using a certain filename format, it also stores the format string into the metadata of the pdf file.\n"+
+                        "In this way, if pdf-renamer comes across that same file later, and the current filename format is the same as the one stored in the pdf file metadata,\n"+
                         "the file is ignored. By using this command, this behavior is overruled: pdf-renamer will always rename each file it comes across.",
                         action="store_true")
     parser.add_argument(
@@ -311,11 +311,11 @@ def main():
                         dest="install_right_click",
                         action="store_true",
                         help=f"Add a shortcut to pdf-renamer in the right-click context menu of Windows. You can rename a single pdf file (or all pdf files in a folder) by just right clicking on it!\n"+
-                       "NOTE: this feature is only available on Windows.")
+                       "NOTE: this feature is only available on Windows, and it needs to be run from a terminal opened with administrator rights.")
     parser.add_argument("-uninstall--right--click",
                         dest="uninstall_right_click",
                         action="store_true",
-                        help="Uninstall the right-click context menu functionalities. NOTE: this feature is only available on Windows.")
+                        help="Uninstall the right-click context menu functionalities. NOTE: this feature is only available on Windows, and it needs to be run from a terminal opened with administrator rights.")
 
     
     args = parser.parse_args()
