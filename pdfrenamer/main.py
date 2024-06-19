@@ -13,6 +13,11 @@ from pdfrenamer.filename_creators import build_filename, AllowedTags, check_form
 import traceback
 import sys
 
+#We tell pdf2doi and pdf2bib to use the same value of save_identifier_metadata specified in the settings of pdf-renamer. When pdf-renamer is called via command line, 
+#the value of save_identifier_metadata (for both pdf2doi, pdf2bib and pdf-renamer) might get changed
+pdf2doi.config.set('save_identifier_metadata',config.get('add_metadata')) 
+pdf2bib.config.set('save_identifier_metadata',config.get('add_metadata'))  
+
 logger = logging.getLogger("pdf-renamer")
 
 def rename(target, format=None, tags=None):
@@ -157,7 +162,8 @@ def rename(target, format=None, tags=None):
                     try:
                         NewPathWithExt_renamed = rename_file(filename,NewPath,ext) 
                         logger.info(f"File renamed correctly.")
-                        pdf2doi.add_metadata(NewPathWithExt_renamed ,'/pdfrenamer_nameformat',format)
+                        if config.get('add_metadata') == True:
+                            pdf2doi.add_metadata(NewPathWithExt_renamed ,'/pdfrenamer_nameformat',format)
                         if not (NewPathWithExt == NewPathWithExt_renamed):
                             logger.info(f"(Note: Another file with the same name was already present in the same folder, so a numerical index was added at the end).")
                         result['path_new'] = NewPathWithExt_renamed
@@ -255,6 +261,10 @@ def main():
                         "--decrease_verbose",
                         help="Decrease verbosity. By default (i.e. when not using -s), all steps performed by pdf-renamer, pdf2dbib and pdf2doi are documented.",
                         action="store_true")
+    parser.add_argument("-ro",
+                    "--readonly",
+                    help="By default, pdf-renamer and pdf2doi store some information the metadata of the pdf file in order to speed up subsequent processing. By using this additional option, no metadata is ever added.",
+                    action="store_true")
     parser.add_argument('-f', 
                         help=f"Format of the new filename. Default = \"{config.get('format')}\".\n"+
                         "Valid tags:\n"+
@@ -377,6 +387,10 @@ def main():
     if target == "": #This occurs either if the user forgot to add a target, or if the user used the -sd command to set default values
         return
     ## END
+    
+    config.set('add_metadata', not (args.readonly))
+    pdf2doi.config.set('save_identifier_metadata',config.get('add_metadata')) 
+    pdf2bib.config.set('save_identifier_metadata',config.get('add_metadata')) 
 
     if(args.decrease_verbose==True):
         print(f"(All intermediate output will be suppressed. To see additional output, do not use the command -s)")
