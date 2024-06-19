@@ -54,8 +54,6 @@ where ```target``` is either a valid pdf file or a directory containing pdf file
 
 A list of the standard settings, and additional commands, can be obtained by typing ```pdfrenamer --h```
 
-Type
-
 ```
 $ pdfrenamer --h
 usage: pdfrenamer [-h] [-s] [-ro] [-f FORMAT] [-sf] [-max_length_authors MAX_LENGTH_AUTHORS]
@@ -73,7 +71,7 @@ options:
   -h, --help            show this help message and exit
   -s, --decrease_verbose
                         Decrease verbosity. By default (i.e. when not using -s), all steps performed by pdf-renamer, pdf2dbib and pdf2doi are documented.
-  -ro, --readonly       By default, pdf-renamer and pdf2doi store some information the metadata of the pdf file in order to speed up subsequent processing. By using this additional option, no metadata is ever added.
+  -ro, --readonly       By default, pdf-renamer and pdf2doi store some information into the metadata of the pdf file in order to speed up subsequent processing. By using this additional option, no metadata is ever added.
   -f FORMAT             Format of the new filename. Default = "{YYYY} - {Jabbr} - {A3etal} - {T}".
                         Valid tags:
                         {YYYY}          =        Year of publication
@@ -101,17 +99,17 @@ options:
   -add_abbreviation_file PATH_ABBREVIATION_FILE
                         The content of the text file specified by PATH_ABBREVIATION_FILE will be added to the user list of journal abbreviations.
                         Each row of the text file must have the format 'FULL NAME = ABBREVIATION'.
-  -fr, --force_rename   By default, whenever pdf-renamer renames a pdf file by using a certain filename format, it also stores the format string into a tag of the pdf file.
-                        In this way if pdf-renamer comes across that same file later, and the current filename format is the same as the one stored in the pdf file tag,
-                        the file is ignored. By using this command, this behavior is overruled: pdf-renamer will always rename each file it comes across.
+  -fr, --force_rename   By default, whenever pdf-renamer renames a pdf file by using a certain filename format, it also stores the format string into a metadata of the pdf file.
+                        In this way, if pdf-renamer comes across that same file later, and the current filename format is the same as the one stored in the pdf file metadata,
+                        the file is ignored. By adding the command '-fr', this behavior is overruled: pdf-renamer will always rename each file it comes across.
   -sd, --set_default    By adding this command, any value specified (in this same command) for the filename format (-f),
                         max length of author string (-max_length_authors), max length of filename string (-max_length_filename),
                         max number of title words (-max_words_title), and case (-case) will be also stored as default value(s) for the future.
   -install--right--click
                         Add a shortcut to pdf-renamer in the right-click context menu of Windows. You can rename a single pdf file (or all pdf files in a folder) by just right clicking on it!
-                        NOTE: this feature is only available on Windows.
+                        NOTE: this feature is only available on Windows, and it needs to be run from a terminal opened with administrator rights.
   -uninstall--right--click
-                        Uninstall the right-click context menu functionalities. NOTE: this feature is only available on Windows.
+                        Uninstall the right-click context menu functionalities. NOTE: this feature is only available on Windows, and it needs to be run from a terminal opened with administrator rights.
 ```
 Several tags (as listed above) can be used to change the standard filename format, for example,
 ```
