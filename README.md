@@ -3,6 +3,17 @@ pdf-renamer is a Python command-line tool to automatically rename the pdf files 
 other identifiers (e.g. [arXiv](https://arxiv.org)). It can be used to rename single files or to scan entire folders and sub-folders.
 The format of the filename can be specified by the user by choosing among several tags. Besides command-line operation, it can also be used as a library
 from your Python project. 
+[![Downloads](https://pepy.tech/badge/pdf-renamer)](https://pepy.tech/project/pdf-renamer)[![Downloads](https://pepy.tech/badge/pdf-renamer/month)](https://pepy.tech/project/pdf-renamer)
+[![Pip Package](https://img.shields.io/pypi/v/pdf-renamer?logo=PyPI)](https://pypi.org/project/pdf-renamer?versions=1.0?versions=1.1)
+
+## Warning
+```pdf-renamer``` uses ```pdf2doi``` to find the DOI of a paper. Versions of ```pdf2doi``` prior to the **1.6** are affected by a very annoying bug. By default, after finding the DOI of a pdf paper, ```pdf2doi``` will store the DOI into the metadata of the pdf file. Due to a bug, the size of the pdf file doubles everytime that a metadata was added. This bug has been fixed in all versions of ```pdf2doi``` > 1.6. 
+
+If you have pdf files that have been affected by this bug, you can use ```pdf2doi``` to fix it. After updating ```pdf2doi``` to a version > 1.6, run ```pdf2doi path/to/folder/containing/pdf/files -id ''```. This will restore the pdf files to their original size.
+
+
+## Latest stable version
+The latest stable version of ```pdf-renamer``` is the **1.1**. See [here](https://github.com/MicheleCotrufo/pdf-renamer/releases) for the full change log.
 
 ## Table of Contents
  - [Description](#description)
@@ -12,18 +23,11 @@ from your Python project.
   - [Contributing](#contributing)
  - [License](#license)
 
-## Description
-```pdf-renamer``` uses the libraries [pdf2doi](https://github.com/MicheleCotrufo/pdf2doi) and [pdf2bib](https://github.com/MicheleCotrufo/pdf2bib) to extract 
-bibliographic data of a paper starting from a .pdf file. The retrieved data can then be used to automatically rename pdf files with a custom format (e.g. 'Year - Journal - Authors - Title').
-
 ## Installation
-[![Downloads](https://pepy.tech/badge/pdf-renamer)](https://pepy.tech/project/pdf-renamer)[![Downloads](https://pepy.tech/badge/pdf-renamer/month)](https://pepy.tech/project/pdf-renamer)
-[![Pip Package](https://img.shields.io/pypi/v/pdf-renamer?logo=PyPI)](https://pypi.org/project/pdf-renamer?versions=1.0rc2)
-
 Use the package manager pip to install ```pdf-renamer```.
 
 ```bash
-pip install pdf-renamer==1.0
+pip install pdf-renamer==1.1
 ```
 This will install ```pdf-renamer``` as  Python package, but also as a stand-alone executable script. 
 The executable will be installed in a directory whose path depends on your Python installation and operating system. 
@@ -32,6 +36,10 @@ You can check how to add the folder to the ```PATH``` variable for [Windows](htt
 [Mac](https://www.google.com/search?q=python+add+script+folder+to+path+mac) and [Linux](https://www.google.com/search?q=python+add+script+folder+to+path+linux).
 
 Under Windows, it is also possible to add [shortcuts to the right-click context menu](#installing-the-shortcuts-in-the-right-click-context-menu-of-windows).
+
+## Description
+```pdf-renamer``` uses the libraries [pdf2doi](https://github.com/MicheleCotrufo/pdf2doi) and [pdf2bib](https://github.com/MicheleCotrufo/pdf2bib) to extract 
+bibliographic data of a paper starting from a .pdf file. The retrieved data can then be used to automatically rename pdf files with a custom format (e.g. 'Year - Journal - Authors - Title').
 
 ## Usage
 
@@ -50,8 +58,10 @@ Type
 
 ```
 $ pdfrenamer --h
-usage: pdfrenamer [-h] [-s] [-f FORMAT] [-sf] [-max_length_authors MAX_LENGTH_AUTHORS] [-max_length_filename MAX_LENGTH_FILENAME] [-max_words_title MAX_WORDS_TITLE] [-case CASE] [-add_abbreviation_file PATH_ABBREVIATION_FILE] [-sd]
-                  [-install--right--click] [-uninstall--right--click]
+usage: pdfrenamer [-h] [-s] [-ro] [-f FORMAT] [-sf] [-max_length_authors MAX_LENGTH_AUTHORS]
+                  [-max_length_filename MAX_LENGTH_FILENAME] [-max_words_title MAX_WORDS_TITLE] [-case CASE]
+                  [-add_abbreviation_file PATH_ABBREVIATION_FILE] [-fr] [-sd] [-install--right--click]
+                  [-uninstall--right--click]
                   [path ...]
 
 Automatically renames pdf files of scientific publications by retrieving their identifiers (e.g. DOI or arxiv ID) and looking up their bibtex infos.
@@ -63,6 +73,7 @@ options:
   -h, --help            show this help message and exit
   -s, --decrease_verbose
                         Decrease verbosity. By default (i.e. when not using -s), all steps performed by pdf-renamer, pdf2dbib and pdf2doi are documented.
+  -ro, --readonly       By default, pdf-renamer and pdf2doi store some information the metadata of the pdf file in order to speed up subsequent processing. By using this additional option, no metadata is ever added.
   -f FORMAT             Format of the new filename. Default = "{YYYY} - {Jabbr} - {A3etal} - {T}".
                         Valid tags:
                         {YYYY}          =        Year of publication
@@ -90,6 +101,9 @@ options:
   -add_abbreviation_file PATH_ABBREVIATION_FILE
                         The content of the text file specified by PATH_ABBREVIATION_FILE will be added to the user list of journal abbreviations.
                         Each row of the text file must have the format 'FULL NAME = ABBREVIATION'.
+  -fr, --force_rename   By default, whenever pdf-renamer renames a pdf file by using a certain filename format, it also stores the format string into a tag of the pdf file.
+                        In this way if pdf-renamer comes across that same file later, and the current filename format is the same as the one stored in the pdf file tag,
+                        the file is ignored. By using this command, this behavior is overruled: pdf-renamer will always rename each file it comes across.
   -sd, --set_default    By adding this command, any value specified (in this same command) for the filename format (-f),
                         max length of author string (-max_length_authors), max length of filename string (-max_length_filename),
                         max number of title words (-max_words_title), and case (-case) will be also stored as default value(s) for the future.
