@@ -12,7 +12,8 @@ class config():
             'max_words_title' : 5,
             'check_subfolders' : False,
             'force_rename' : True,
-            'case' : ''
+            'case' : '',
+            'add_metadata' : True
             }
     __setters = __params.keys()
 
