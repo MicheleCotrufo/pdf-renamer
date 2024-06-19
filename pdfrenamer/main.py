@@ -263,7 +263,7 @@ def main():
                         action="store_true")
     parser.add_argument("-ro",
                     "--readonly",
-                    help="By default, pdf-renamer and pdf2doi store some information the metadata of the pdf file in order to speed up subsequent processing. By using this additional option, no metadata is ever added.",
+                    help="By default, pdf-renamer and pdf2doi store some information into the metadata of the pdf file in order to speed up subsequent processing. By using this additional option, no metadata is ever added.",
                     action="store_true")
     parser.add_argument('-f', 
                         help=f"Format of the new filename. Default = \"{config.get('format')}\".\n"+
