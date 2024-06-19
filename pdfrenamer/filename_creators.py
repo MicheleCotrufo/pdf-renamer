@@ -92,15 +92,16 @@ def sanitize(string):
 
     #Step 2. Find all substrings in the format {\string1{string2}} (e.g. {\`{u}}) and replace them by string2
     #We use the function remove_latex_codes defined in the pdf2bib package
-    string = pdf2bib.remove_latex_codes(string)
+    string = pdf2bib.remove_latex_codes(string)   
 
-    #Step 3. Remove any residual special character
+    #Step 3. #Check that the string is only made out of ascii characters (i.e. no accents, tildes, etc.)
+    string = unidecode.unidecode(string) 
+    
+    #Step 4. Remove any residual special character
     invalid = "<>\"/\|*{}'?:"
     for char in invalid:
         string = string.replace(char, '')
-    #Step 4. #Make a final check that the string is only made out of ascii characters (i.e. no accents, tildes, etc.)
-    string = unidecode.unidecode(string) 
-
+        
     #Step 5. If there are multiple spaces, replace them with only one
     string = re.sub(' +',' ',string)
 
