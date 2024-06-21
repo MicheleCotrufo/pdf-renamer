@@ -3,11 +3,12 @@ pdf-renamer is a Python command-line tool to automatically rename the pdf files 
 other identifiers (e.g. [arXiv](https://arxiv.org)). It can be used to rename single files or to scan entire folders and sub-folders.
 The format of the filename can be specified by the user by choosing among several tags. Besides command-line operation, it can also be used as a library
 from your Python project. 
+
 [![Downloads](https://pepy.tech/badge/pdf-renamer)](https://pepy.tech/project/pdf-renamer)[![Downloads](https://pepy.tech/badge/pdf-renamer/month)](https://pepy.tech/project/pdf-renamer)
 [![Pip Package](https://img.shields.io/pypi/v/pdf-renamer?logo=PyPI)](https://pypi.org/project/pdf-renamer?versions=1.0?versions=1.1)
 
 ## Warning
-```pdf-renamer``` uses ```pdf2doi``` to find the DOI of a paper. Versions of ```pdf2doi``` prior to the **1.6** are affected by a very annoying bug. By default, after finding the DOI of a pdf paper, ```pdf2doi``` will store the DOI into the metadata of the pdf file. Due to a bug, the size of the pdf file doubles everytime that a metadata was added. This bug has been fixed in all versions of ```pdf2doi``` > 1.6. 
+```pdf-renamer``` uses ```pdf2doi``` to find the DOI of a paper. Versions of ```pdf2doi``` prior to the **1.6** are affected by a very annoying bug. By default, after finding the DOI of a pdf paper, ```pdf2doi``` will store the DOI into the metadata of the pdf file. Due to a bug, the size of the pdf file doubles everytime that a metadata was added. This bug has been fixed in all versions of ```pdf2doi``` >= 1.6. 
 
 If you have pdf files that have been affected by this bug, you can use ```pdf2doi``` to fix it. After updating ```pdf2doi``` to a version > 1.6, run ```pdf2doi path/to/folder/containing/pdf/files -id ''```. This will restore the pdf files to their original size.
 
